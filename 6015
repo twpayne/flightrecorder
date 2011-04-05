@@ -78,13 +78,13 @@ class Flight(object):
 class SixtyFifteen(object):
 
     def __init__(self, filename):
+        logging.info('opening %r' % filename)
         self.fd = os.open(filename, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
         tty.setraw(self.fd)
         attr = tty.tcgetattr(self.fd)
         attr[tty.ISPEED] = attr[tty.OSPEED] = tty.B57600
         tty.tcsetattr(self.fd, tty.TCSAFLUSH, attr)
         self.buffer = ''
-        self.logger = logging.getLogger('%s.%s' % (__name__, filename))
 
     def ieach(self, command):
         self.write(command)
@@ -104,33 +104,35 @@ class SixtyFifteen(object):
                 if select.select([self.fd], [], [], 1) == ([], [], []):
                     raise TimeoutError
                 self.buffer = os.read(self.fd, 1024)
+                logging.debug('read %r' % self.buffer)
                 if len(self.buffer) == 0:
                     raise ReadError
             else:
                 line += self.buffer[:index + 2]
                 self.buffer = self.buffer[index + 2:]
-                self.logger.info('%s', line.encode('string_escape'), extra=dict(direction='read'))
+                logging.info('readline %r' % line)
                 return line
 
     def write(self, line):
-        self.logger.info('%s', line.encode('string_escape'), extra=dict(direction='write'))
+        logging.info('writing %r' % line)
         if os.write(self.fd, line) != len(line):
             raise WriteError
 
     def rfa(self, parameter, format):
         for line in self.ieach('RFA_%02x\r\n' % parameter):
-            m = re.match(r'\ARFA_([0-9A-Fa-f]{2})_((?:[0-9A-Fa-f]{2})*)\r\n\Z', line)
+            m = re.match(r'\ARFA_%02X_((?:[0-9A-Fa-f]{2})*)\r\n\Z' % parameter, line)
             if m:
-                assert int(m.group(1), 16) == parameter
                 return struct.unpack(format, ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(2))))
             if line == 'No Par\r\n':
                 return None
-            raise RuntimeError
-        raise RuntimeError
+            logging.error('unexpected response %r' % line)
+        logging.error('no response')
 
     def flight_book(self):
         serial_number = self.rfa(0x00, '<I')
+        logger.info('serial number = %r' % serial_number)
         manufacturer = ('FLY', 'BRA')[self.rfa(0x01, 'B')]
+        logger.info('manufacturer = %r' % manufacturer)
         result = [Flight.parse(line) for line in self.ieach('ACT_20_00\r\n')]
         date, index = None, 0
         for flight in result:

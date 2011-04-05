@@ -54,7 +54,6 @@ class WriteError(Error):
 
 
 class UTC(datetime.tzinfo):
-    """UTC"""
 
     def utcoffset(self, dt):
         return datetime.timedelta(0)
@@ -103,10 +102,10 @@ class SixtyFifteen(object):
             if index == -1:
                 line += self.buffer
                 if select.select([self.fd], [], [], 1) == ([], [], []):
-                    raise TimeoutError()
+                    raise TimeoutError
                 self.buffer = os.read(self.fd, 1024)
                 if len(self.buffer) == 0:
-                    raise ReadError()
+                    raise ReadError
             else:
                 line += self.buffer[:index + 2]
                 self.buffer = self.buffer[index + 2:]
@@ -116,18 +115,18 @@ class SixtyFifteen(object):
     def write(self, line):
         self.logger.info('%s', line.encode('string_escape'), extra=dict(direction='write'))
         if os.write(self.fd, line) != len(line):
-            raise WriteError()
+            raise WriteError
 
     def rfa(self, parameter, format):
         for line in self.ieach('RFA_%02x\r\n' % parameter):
             m = re.match(r'\ARFA_([0-9A-Fa-f]{2})_((?:[0-9A-Fa-f]{2})*)\r\n\Z', line)
             if m:
                 assert int(m.group(1), 16) == parameter
-                return struct.unpack(fomat, ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(2))))
+                return struct.unpack(format, ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(2))))
             if line == 'No Par\r\n':
                 return None
-            raise RuntimeError()
-        raise RuntimeError()
+            raise RuntimeError
+        raise RuntimeError
 
     def flight_book(self):
         serial_number = self.rfa(0x00, '<I')

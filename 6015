@@ -155,10 +155,14 @@ class SixtyFifteen(object):
 
 def main(argv):
     parser = OptionParser()
-    parser.add_option('-d', '--device', metavar='DEVICE')
-    parser.add_option('-v', '--verbose', action='count', dest='level')
+    parser.add_option('-d', '--device', metavar='DEVICE', help='set device filename')
+    parser.add_option('-o', '--overwrite', action='store_true', help='re-download already downloaded tracklogs')
+    parser.add_option('-v', '--verbose', action='count', dest='level', help='show debugging information')
     parser.set_defaults(level=0)
     options, args = parser.parse_args(argv[1:])
+    if args:
+        logging.error('extra arguments on command line')
+        return 1
     if not options.device:
         for device_glob in DEVICE_GLOBS.get(os.uname()[0], ()):
             for device in glob(device_glob):
@@ -170,7 +174,7 @@ def main(argv):
     logging.basicConfig(level=logging.WARN - 10 * options.level)
     sixty_fifteen = SixtyFifteen(options.device)
     for flight in sixty_fifteen.flight_book():
-        if not os.path.exists(flight.igc_filename):
+        if options.overwrite or not os.path.exists(flight.igc_filename):
             print 'Downloading %s...' % flight.igc_filename,
             f = NamedTemporaryFile(prefix='6015', delete=False)
             try:

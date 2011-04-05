@@ -119,8 +119,8 @@ class SixtyFifteen(object):
             raise WriteError
 
     def rfa(self, parameter, format):
-        for line in self.ieach('RFA_%02x\r\n' % parameter):
-            m = re.match(r'\ARFA_%02X_((?:[0-9A-Fa-f]{2})*)\r\n\Z' % parameter, line)
+        for line in self.ieach('RFA_%02X\r\n' % parameter):
+            m = re.match(r'\ARFA_%02X_((?:[0-9A-F]{2})*)\r\n\Z' % parameter, line)
             if m:
                 return struct.unpack(format, ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(2))))
             if line == 'No Par\r\n':
@@ -146,7 +146,7 @@ class SixtyFifteen(object):
 
     def get_igc_flight(self, flight):
         lines = []
-        for line in self.ieach('ACT_21_%02x\r\n' % flight.number):
+        for line in self.ieach('ACT_21_%02X\r\n' % flight.number):
             lines.append(line)
             if line.startswith('G'):
                 break

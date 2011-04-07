@@ -225,13 +225,15 @@ class SixtyFifteen(object):
         logging.info('serial number = %r' % serial_number)
         manufacturer = ('FLY', 'BRA')[self.rpa(PA_DeviceTyp)[0]]
         logging.info('manufacturer = %r' % manufacturer)
-        flights, date, index = [], None, 0
         self.io.write('ACT_20_00\r\n')
+        flights = []
         while True:
             line = self.io.readline()
             if line == 'Done\r\n':
                 break
-            flight = Flight(line)
+            flights.append(Flight(line))
+        date, index = None, 0
+        for flight in reversed(flights):
             if flight.datetime.date() == date:
 		index += 1
             else:

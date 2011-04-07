@@ -53,6 +53,10 @@ class WriteError(Error):
     pass
 
 
+class ProtocolError(Error):
+    pass
+
+
 class UTC(datetime.tzinfo):
 
     def utcoffset(self, dt):
@@ -86,15 +90,6 @@ class SixtyFifteen(object):
         tty.tcsetattr(self.fd, tty.TCSAFLUSH, attr)
         self.buffer = ''
 
-    def ieach(self, command):
-        self.write(command)
-        while True:
-            line = self.readline()
-            if line == 'Done\r\n':
-                return
-            else:
-                yield line
-
     def readline(self):
         line = ''
         while True:
@@ -119,34 +114,42 @@ class SixtyFifteen(object):
             raise WriteError
 
     def rfa(self, parameter, format):
-        for line in self.ieach('RFA_%02X\r\n' % parameter):
-            m = re.match(r'\ARFA_%02X_((?:[0-9A-F]{2})*)\r\n\Z' % parameter, line)
-            if m:
-                return struct.unpack(format, ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(2))))
-            if line == 'No Par\r\n':
-                return None
+        self.write('RFA_%02X\r\n' % parameter)
+        line = self.readline()
+        m = re.match(r'\ARFA_%02X_((?:[0-9A-F]{2})*)\r\n\Z' % parameter, line)
+        if m:
+            return struct.unpack(format, ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(2))))
+        elif line == 'No Par\r\n':
+            return None
+        else:
             logging.error('unexpected response %r' % line)
-        logging.error('no response')
+            raise ProtocolError
 
     def flight_book(self):
         serial_number = self.rfa(0x00, '<I')
         logger.info('serial number = %r' % serial_number)
         manufacturer = ('FLY', 'BRA')[self.rfa(0x01, 'B')]
         logger.info('manufacturer = %r' % manufacturer)
-        result = [Flight.parse(line) for line in self.ieach('ACT_20_00\r\n')]
-        date, index = None, 0
-        for flight in result:
+        flights, date, index = [], None, 0
+        self.write('ACT_20_00\r\n')
+        while True:
+            line = self.readline()
+            if line == 'Done\r\n':
+                break
+            flight = Flight.parse(line)
             if flight.datetime.date() == date:
 		index += 1
             else:
 		index = 1
             flight.igc_filename = '%s-%s-%s-%02d.IGC' % (flight.datetime.strftime('%Y-%m-%d'), manufacturer, serial_number, index)
             date = flight.datetime.date()
-        return result
+        return flights
 
     def get_igc_flight(self, flight):
         lines = []
-        for line in self.ieach('ACT_21_%02X\r\n' % flight.number):
+        self.write('ACT_21_%02X\r\n' % flight.number)
+        while True:
+            line = self.readline()
             lines.append(line)
             if line.startswith('G'):
                 break

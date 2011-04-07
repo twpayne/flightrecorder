@@ -32,7 +32,7 @@ import tty
 
 
 DEVICE_GLOBS = {
-        'Darwin': ('/dev/cu.usbserial*',),
+        'Darwin': ('/dev/cu.PL2303*', '/dev/cu.usbserial*',),
         'FreeBSD': ('/dev/cuad*',),
         'Linux': ('/dev/ttyUSB*',)}
 

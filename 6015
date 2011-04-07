@@ -17,6 +17,7 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from collections import deque
 import datetime
 from glob import glob
 import logging
@@ -29,6 +30,28 @@ import struct
 import sys
 from tempfile import NamedTemporaryFile
 import tty
+
+
+PA_DeviceNr = 0x00
+PA_DeviceTyp = 0x01
+PA_SoftVers = 0x02
+PA_KalibType = 0x03
+PA_Filt1_K = 0x04
+PA_Filt2_K = 0x05
+PA_Filt4_K = 0x06
+PA_AudioHyst = 0x07
+PA_AudioRsThrFaktor = 0x8
+PA_BattLevel1 = 0x09
+PA_BattLevel2 = 0x0a
+PA_BattLevel2 = 0x0b
+PA_AltiDiff_FLA = 0x0c
+PA_Vario_FLA = 0x0d
+PA_Speed_FLA = 0x0e
+PA_MemoStartDelay = 0x0f
+PA_Vario_FLE = 0x10
+PA_Speed_FLE = 0x11
+
+PA_FORMAT = ['<I', 'B', '<I', 'B', '4B', '4B', '4B', '4B', '4B', '10C', '10C', '10C', '<l', '<i', 'B', '<i', '<I']
 
 
 DEVICE_GLOBS = {
@@ -76,10 +99,10 @@ class Flight(object):
         self.number = int(fields[0])
         year, month, day = (int(x) for x in fields[1].split('.'))
         hour, minute, second = (int(x) for x in fields[2].split(':'))
-        self.datetime = datetime.datetime(year + 2000, month, day, hour, minute, second, tzinfo=utc.UTC())
+        self.datetime = datetime.datetime(year + 2000, month, day, hour, minute, second, tzinfo=UTC())
 
 
-class SixtyFifteen(object):
+class SerialIO(object):
 
     def __init__(self, filename):
         logging.info('opening %r' % filename)
@@ -88,7 +111,6 @@ class SixtyFifteen(object):
         attr = tty.tcgetattr(self.fd)
         attr[tty.ISPEED] = attr[tty.OSPEED] = tty.B57600
         tty.tcsetattr(self.fd, tty.TCSAFLUSH, attr)
-        self.buffer = ''
 
     def readline(self):
         line = ''
@@ -113,12 +135,85 @@ class SixtyFifteen(object):
         if os.write(self.fd, line) != len(line):
             raise WriteError
 
-    def rfa(self, parameter, format):
-        self.write('RFA_%02X\r\n' % parameter)
-        line = self.readline()
-        m = re.match(r'\ARFA_%02X_((?:[0-9A-F]{2})*)\r\n\Z' % parameter, line)
+
+class MockIO(object):
+
+    def __init__(self):
+        self.lines = deque()
+        self.fa = [None] * 18
+        self.fa[PA_DeviceNr] = [1234]
+        self.fa[PA_DeviceTyp] = [0]
+        self.flights = []
+        self.flights.append((
+            (0,  9, 11, 16, 12, 43,  3, 1,  0,  8, 53, -161, 978, 452, 3.49, -2.90, 1.38, 'not-set', 'not set', 'not set'), (
+            'AFLY000A 00010\r\n',
+            'HFDTE091009\r\n',
+            'HFFXA010\r\n',
+            'HFPLTPILOT:not set	\r\n',
+            'HFGTYGLIDERTYPE: not set	\r\n',
+            'HFGIDGLIDERID: not set	\r\n',
+            'HFDTM100GPSDATUM:WGS84\r\n',
+            'HFRFWFIRMWAREVERSION: 1.1.07 Ger\r\n',
+            'HFRHWHARDWAREVERSION:1.00\r\n',
+            'HFFTYFRTYPE:Brauniger,IQ-Basic GPS\r\n',
+            'HFGPS:FASTRAX,IT321,20\r\n',
+            'HFPRSPRESSALTSENSOR:INTERSEMA,MS5401BM,12000\r\n',
+            'HFTZNUTCOFFSET: 1\r\n',
+            'HFATS1013.3\r\n',
+            'I033638FXA3940SIU4143TAS\r\n',
+            'F08320109122627\r\n',
+            'B0832014700785N00818451EA005730033000904000\r\n',
+            'F0832330912142627\r\n',
+            'E083233STA\r\n',
+            'B0832334700785N00818451EA005330032700005000\r\n',
+            'B0832044700785N00818451EA003280032900405000\r\n',
+            'B0832094700784N00818451EA003710032700405000\r\n',
+            'B0832004700784N00818451EA003330032700505000\r\n',
+            'B0838144700842N00818464EA003940044900106000\r\n',
+            'B0838194700842N00818464EA003940044900106000\r\n',
+            'GED0E339A2CDFC90374F664B36BA80B6DA5503AA490D896D0BE5F817012D9F997\r\n')))
+        self.flights.append((
+            (1,  9, 10,  9,  8, 43, 27, 1,  0,  6, 19,    0, 580, 233, 1.90, -2.25, 0.77, 'not-set', 'not-set', 'not-set'), ('G')))
+
+    def write(self, line):
+        logging.info('write %r' % line)
+        m = re.match(r'\ARPA_([0-9A-F]{2})\r\n\Z', line)
         if m:
-            return struct.unpack(format, ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(2))))
+            index = int(m.group(1), 16)
+            if self.fa[index] is None:
+                self.lines.append('No Par\r\n')
+            else:
+                self.lines.append('RPA_%02X_%s\r\n' % (index, ''.join('%02X' % ord(c) for c in struct.pack(PA_FORMAT[index], *self.fa[index]))))
+            return
+        if line == 'ACT_20_00\r\n':
+            for flight in self.flights:
+                self.lines.append('%6d; %02d.%02d.%02d; %02d:%02d:%02d; %8d; %02d:%02d:%02d; %8d; %8d; %8d; %8.2f; %8.2f; %8.2f;%16s;%16s;%16s\r\n' % flight[0])
+            self.lines.append('Done\r\n')
+            return
+        m = re.match(r'\AACT_21_([0-9A-F]{2})\r\n\Z', line)
+        if m:
+            index = int(m.group(1), 16)
+            self.lines.extend(l for l in self.flights[index][1])
+            return
+
+    def readline(self):
+        line = self.lines.popleft()
+        logging.info('readline %r' % line)
+        return line
+
+
+class SixtyFifteen(object):
+
+    def __init__(self, io):
+        self.io = io
+        self.buffer = ''
+
+    def rpa(self, parameter):
+        self.io.write('RPA_%02X\r\n' % parameter)
+        line = self.io.readline()
+        m = re.match(r'\ARPA_%02X_((?:[0-9A-F]{2})*)\r\n\Z' % parameter, line)
+        if m:
+            return struct.unpack(PA_FORMAT[parameter], ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(1))))
         elif line == 'No Par\r\n':
             return None
         else:
@@ -126,30 +221,31 @@ class SixtyFifteen(object):
             raise ProtocolError
 
     def flight_book(self):
-        serial_number = self.rfa(0x00, '<I')
-        logger.info('serial number = %r' % serial_number)
-        manufacturer = ('FLY', 'BRA')[self.rfa(0x01, 'B')]
-        logger.info('manufacturer = %r' % manufacturer)
+        serial_number = self.rpa(PA_DeviceNr)[0]
+        logging.info('serial number = %r' % serial_number)
+        manufacturer = ('FLY', 'BRA')[self.rpa(PA_DeviceTyp)[0]]
+        logging.info('manufacturer = %r' % manufacturer)
         flights, date, index = [], None, 0
-        self.write('ACT_20_00\r\n')
+        self.io.write('ACT_20_00\r\n')
         while True:
-            line = self.readline()
+            line = self.io.readline()
             if line == 'Done\r\n':
                 break
-            flight = Flight.parse(line)
+            flight = Flight(line)
             if flight.datetime.date() == date:
 		index += 1
             else:
 		index = 1
             flight.igc_filename = '%s-%s-%s-%02d.IGC' % (flight.datetime.strftime('%Y-%m-%d'), manufacturer, serial_number, index)
             date = flight.datetime.date()
+            flights.append(flight)
         return flights
 
     def get_igc_flight(self, flight):
         lines = []
-        self.write('ACT_21_%02X\r\n' % flight.number)
+        self.io.write('ACT_21_%02X\r\n' % flight.number)
         while True:
-            line = self.readline()
+            line = self.io.readline()
             lines.append(line)
             if line.startswith('G'):
                 break
@@ -175,7 +271,11 @@ def main(argv):
         logging.error('Could not find device')
         return 1
     logging.basicConfig(level=logging.WARN - 10 * options.level)
-    sixty_fifteen = SixtyFifteen(options.device)
+    if options.device == 'mock':
+        io = MockIO()
+    else:
+        io = SerialIO(options.device)
+    sixty_fifteen = SixtyFifteen(io)
     for flight in sixty_fifteen.flight_book():
         if options.overwrite or not os.path.exists(flight.igc_filename):
             print 'Downloading %s...' % flight.igc_filename,

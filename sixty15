@@ -164,11 +164,9 @@ class SerialIO(object):
             else:
                 line += self.buffer[:index + 2]
                 self.buffer = self.buffer[index + 2:]
-                logging.info('readline %r' % line)
                 return line
 
     def write(self, line):
-        logging.info('writing %r' % line)
         if os.write(self.fd, line) != len(line):
             raise WriteError
 
@@ -213,7 +211,6 @@ class MockIO(object):
             (1,  9, 10,  9,  8, 43, 27, 1,  0,  6, 19,    0, 580, 233, 1.90, -2.25, 0.77, 'not-set', 'not-set', 'not-set'), ('G')))
 
     def write(self, line):
-        logging.info('write %r' % line)
         m = re.match(r'\ARPA_([0-9A-F]{2})\r\n\Z', line)
         if m:
             index = int(m.group(1), 16)
@@ -234,9 +231,7 @@ class MockIO(object):
             return
 
     def readline(self):
-        line = self.lines.popleft()
-        logging.info('readline %r' % line)
-        return line
+        return self.lines.popleft()
 
 
 class Sixty15(object):
@@ -245,9 +240,18 @@ class Sixty15(object):
         self.io = io
         self.buffer = ''
 
-    def rpa(self, parameter):
-        self.io.write('RPA_%02X\r\n' % parameter)
+    def readline(self):
         line = self.io.readline()
+        logging.info('readline %r' % line)
+        return line
+
+    def write(self, line):
+        logging.info('write %r' % line)
+        self.io.write(line)
+
+    def rpa(self, parameter):
+        self.write('RPA_%02X\r\n' % parameter)
+        line = self.readline()
         m = re.match(r'\ARPA_%02X_((?:[0-9A-F]{2})*)\r\n\Z' % parameter, line)
         if m:
             return struct.unpack(PA_FORMAT[parameter], ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(1))))
@@ -262,10 +266,10 @@ class Sixty15(object):
         logging.info('serial number = %r' % serial_number)
         manufacturer = ('FLY', 'BRA')[self.rpa(PA_DeviceTyp)[0]]
         logging.info('manufacturer = %r' % manufacturer)
-        self.io.write('ACT_20_00\r\n')
+        self.write('ACT_20_00\r\n')
         flights = []
         while True:
-            line = self.io.readline()
+            line = self.readline()
             if line == 'Done\r\n':
                 break
             flights.append(Flight(line))
@@ -281,9 +285,9 @@ class Sixty15(object):
 
     def get_igc_flight(self, flight):
         lines = []
-        self.io.write('ACT_21_%02X\r\n' % flight.number)
+        self.write('ACT_21_%02X\r\n' % flight.number)
         while True:
-            line = self.io.readline()
+            line = self.readline()
             lines.append(line)
             if line.startswith('G'):
                 break

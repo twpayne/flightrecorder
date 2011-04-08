@@ -62,7 +62,10 @@ DEVICE_GLOBS = {
 
 
 class Error(RuntimeError):
-    pass
+
+    def __init__(self, message=None):
+        RuntimeError.__init__(self, message)
+        self.message = message
 
 
 class TimeoutError(Error):
@@ -82,10 +85,7 @@ class ProtocolError(Error):
 
 
 class UserError(Error):
-
-    def __init__(self, message):
-        Error.__init__(self, message)
-        self.message = message
+    pass
 
 
 class UTC(datetime.tzinfo):
@@ -258,8 +258,7 @@ class Sixty15(object):
         elif line == 'No Par\r\n':
             return None
         else:
-            logging.error('unexpected response %r' % line)
-            raise ProtocolError
+            raise ProtocolError('unexpected response %r' % line)
 
     def flight_book(self):
         serial_number = self.rpa(PA_DeviceNr)[0]

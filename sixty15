@@ -81,6 +81,13 @@ class ProtocolError(Error):
     pass
 
 
+class UserError(Error):
+
+    def __init__(self, message):
+        Error.__init__(self, message)
+        self.message = message
+
+
 class UTC(datetime.tzinfo):
 
     def utcoffset(self, dt):
@@ -261,7 +268,7 @@ class RangeSet(object):
         for f in re.split(r'\s*,\s*', s):
             m = re.match(r'\A(\d+)(?:-(\d+))?\Z', f)
             if not m:
-                raise RuntimeError
+                raise UserError('invalid range %r' % f)
             start = int(m.group(1))
             stop = int(m.group(2)) + 1 if m.group(2) else start + 1
             self.slices.append(slice(start, stop))
@@ -292,33 +299,36 @@ def main(argv):
         io = MockIO()
     else:
         io = SerialIO(options.device)
-    sixty15 = Sixty15(io)
-    if args[0] == 'do' or args[0] == 'download':
-        range_sets = [RangeSet(arg) for arg in args[1:]]
-        for i, flight in enumerate(sixty15.flight_book()):
-            if range_sets and not any(i + 1 in rs for rs in range_sets):
-                continue
-            if options.overwrite or not os.path.exists(flight.igc_filename):
-                print 'Downloading %s...' % flight.igc_filename,
-                f = NamedTemporaryFile(prefix='6015', delete=False)
-                try:
-                    f.write(''.join(sixty15.get_igc_flight(flight)))
-                    f.close()
-                    os.rename(f.name, flight.igc_filename)
-                except:
-                    os.unlink(f.name)
-                    raise
-                print
-    elif args[0] == 'id':
-        if len(args) > 1:
-            logging.error('extra arguments on command line %r' % args[1:])
-            return 1
-        d = {}
-        d['model'] = ['Flytec 6015', 'Brauniger IQ Basic'][sixty15.rpa(PA_DeviceTyp)[0]]
-        d['serial_number'] = sixty15.rpa(PA_DeviceNr)[0]
-        print json.dumps(d, indent=4, sort_keys=True)
-    else:
-        logging.error('invalid command %r' % args)
+    try:
+        sixty15 = Sixty15(io)
+        if args[0] == 'do' or args[0] == 'download':
+            range_sets = [RangeSet(arg) for arg in args[1:]]
+            for i, flight in enumerate(sixty15.flight_book()):
+                if range_sets and not any(i + 1 in rs for rs in range_sets):
+                    continue
+                if options.overwrite or not os.path.exists(flight.igc_filename):
+                    print 'Downloading %s...' % flight.igc_filename,
+                    f = NamedTemporaryFile(prefix='6015', delete=False)
+                    try:
+                        f.write(''.join(sixty15.get_igc_flight(flight)))
+                        f.close()
+                        os.rename(f.name, flight.igc_filename)
+                    except:
+                        os.unlink(f.name)
+                        raise
+                    print
+        elif args[0] == 'id':
+            if len(args) > 1:
+                raise UserError('extra arguments on command line %r' % args[1:])
+            d = {}
+            d['model'] = ['Flytec 6015', 'Brauniger IQ Basic'][sixty15.rpa(PA_DeviceTyp)[0]]
+            d['serial_number'] = sixty15.rpa(PA_DeviceNr)[0]
+            print json.dumps(d, indent=4, sort_keys=True)
+        else:
+            raise UserError('invalid command %r' % args)
+    except UserError, e:
+        print '%s: %s' % (os.path.basename(argv[0]), e.message)
+        return 1
 
 
 if __name__ == '__main__':

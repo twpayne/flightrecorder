@@ -253,6 +253,22 @@ class SixtyFifteen(object):
         return lines
 
 
+class RangeSet(object):
+
+    def __init__(self, s):
+        self.slices = []
+        for f in re.split(r'\s*,\s*', s):
+            m = re.match(r'\A(\d+)(?:-(\d+))?\Z', f)
+            if not m:
+                raise RuntimeError
+            start = int(m.group(1))
+            stop = int(m.group(2)) + 1 if m.group(2) else start + 1
+            self.slices.append(slice(start, stop))
+
+    def __contains__(self, x):
+        return any(sl.start <= x < sl.stop for sl in self.slices)
+
+
 def main(argv):
     parser = OptionParser()
     parser.add_option('-d', '--device', metavar='DEVICE', help='set device filename')
@@ -260,9 +276,8 @@ def main(argv):
     parser.add_option('-v', '--verbose', action='count', dest='level', help='show debugging information')
     parser.set_defaults(level=0)
     options, args = parser.parse_args(argv[1:])
-    if args:
-        logging.error('extra arguments on command line')
-        return 1
+    if not args:
+        args = ('download',)
     if not options.device:
         for device_glob in DEVICE_GLOBS.get(os.uname()[0], ()):
             for device in glob(device_glob):
@@ -277,18 +292,24 @@ def main(argv):
     else:
         io = SerialIO(options.device)
     sixty_fifteen = SixtyFifteen(io)
-    for flight in sixty_fifteen.flight_book():
-        if options.overwrite or not os.path.exists(flight.igc_filename):
-            print 'Downloading %s...' % flight.igc_filename,
-            f = NamedTemporaryFile(prefix='6015', delete=False)
-            try:
-                f.write(''.join(sixty_fifteen.get_igc_flight(flight)))
-                f.close()
-                os.rename(f.name, flight.igc_filename)
-            except:
-                os.unlink(f.name)
-                raise
-            print
+    if args[0] == 'do' or args[0] == 'download':
+        range_sets = [RangeSet(arg) for arg in args[1:]]
+        for i, flight in enumerate(sixty_fifteen.flight_book()):
+            if range_sets and not any(i + 1 in rs for rs in range_sets):
+                continue
+            if options.overwrite or not os.path.exists(flight.igc_filename):
+                print 'Downloading %s...' % flight.igc_filename,
+                f = NamedTemporaryFile(prefix='6015', delete=False)
+                try:
+                    f.write(''.join(sixty_fifteen.get_igc_flight(flight)))
+                    f.close()
+                    os.rename(f.name, flight.igc_filename)
+                except:
+                    os.unlink(f.name)
+                    raise
+                print
+    else:
+        logging.error('invalid command %r' % args)
 
 
 if __name__ == '__main__':

@@ -121,6 +121,23 @@ class Flight(object):
         self.glider_type = fields[12].strip()
         self.glider_id = fields[13].strip()
 
+    def to_json(self):
+        minutes, seconds = divmod(self.duration.seconds, 60)
+        hours, minutes = divmod(minutes, 60)
+        return {
+                'date': self.datetime.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'utc_offset': self.utc_offset,
+                'duration': '%02d:%02d:%02d' % (hours, minutes, seconds),
+                'altitude_offset': self.altitude_offset,
+                'altitude_max': self.altitude_max,
+                'altitude_min': self.altitude_min,
+                'vario_max': self.vario_max,
+                'vario_min': self.vario_min,
+                'speed_max': self.speed_max,
+                'pilot_name': self.pilot_name,
+                'glider_type': self.glider_type,
+                'glider_id': self.glider_id}
+
 
 class SerialIO(object):
 
@@ -341,22 +358,8 @@ def main(argv):
                 raise UserError('extra arguments on command line %r' % args[1:])
             flights_json = []
             for i, flight in enumerate(sixty15.flight_book()):
-                flight_json = {}
+                flight_json = flight.to_json()
                 flight_json['index'] = i
-                flight_json['date'] = flight.datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
-                flight_json['utc_offset'] = flight.utc_offset
-                minutes, seconds = divmod(flight.duration.seconds, 60)
-                hours, minutes = divmod(minutes, 60)
-                flight_json['duration'] = '%02d:%02d:%02d' % (hours, minutes, seconds)
-                flight_json['altitude_offset'] = flight.altitude_offset
-                flight_json['altitude_max'] = flight.altitude_max
-                flight_json['altitude_min'] = flight.altitude_min
-                flight_json['vario_max'] = flight.vario_max
-                flight_json['vario_min'] = flight.vario_min
-                flight_json['speed_max'] = flight.speed_max
-                flight_json['pilot_name'] = flight.pilot_name
-                flight_json['glider_type'] = flight.glider_type
-                flight_json['glider_id'] = flight.glider_id
                 flights_json.append(flight_json)
             print json.dumps({'flights': flights_json}, indent=4, sort_keys=True)
         else:

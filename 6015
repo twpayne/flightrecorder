@@ -240,7 +240,6 @@ class SixtyFifteen(object):
 		index = 1
             flight.igc_filename = '%s-%s-%s-%02d.IGC' % (flight.datetime.strftime('%Y-%m-%d'), manufacturer, serial_number, index)
             date = flight.datetime.date()
-            flights.append(flight)
         return flights
 
     def get_igc_flight(self, flight):

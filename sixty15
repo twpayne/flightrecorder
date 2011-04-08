@@ -202,7 +202,7 @@ class MockIO(object):
         return line
 
 
-class SixtyFifteen(object):
+class Sixty15(object):
 
     def __init__(self, io):
         self.io = io
@@ -291,17 +291,17 @@ def main(argv):
         io = MockIO()
     else:
         io = SerialIO(options.device)
-    sixty_fifteen = SixtyFifteen(io)
+    sixty15 = Sixty15(io)
     if args[0] == 'do' or args[0] == 'download':
         range_sets = [RangeSet(arg) for arg in args[1:]]
-        for i, flight in enumerate(sixty_fifteen.flight_book()):
+        for i, flight in enumerate(sixty15.flight_book()):
             if range_sets and not any(i + 1 in rs for rs in range_sets):
                 continue
             if options.overwrite or not os.path.exists(flight.igc_filename):
                 print 'Downloading %s...' % flight.igc_filename,
                 f = NamedTemporaryFile(prefix='6015', delete=False)
                 try:
-                    f.write(''.join(sixty_fifteen.get_igc_flight(flight)))
+                    f.write(''.join(sixty15.get_igc_flight(flight)))
                     f.close()
                     os.rename(f.name, flight.igc_filename)
                 except:

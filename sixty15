@@ -108,6 +108,8 @@ class Flight(object):
         year, month, day = (int(x) for x in fields[1].split('.'))
         hour, minute, second = (int(x) for x in fields[2].split(':'))
         self.datetime = datetime.datetime(year + 2000, month, day, hour, minute, second, tzinfo=UTC())
+        hours, minutes, seconds = (int(x) for x in fields[4].split(':'))
+        self.duration = datetime.timedelta(seconds=3600 * hours + 60 * minutes + seconds)
 
 
 class SerialIO(object):
@@ -324,6 +326,19 @@ def main(argv):
             d['model'] = ['Flytec 6015', 'Brauniger IQ Basic'][sixty15.rpa(PA_DeviceTyp)[0]]
             d['serial_number'] = sixty15.rpa(PA_DeviceNr)[0]
             print json.dumps(d, indent=4, sort_keys=True)
+        elif args[0] == 'li' or args[0] == 'list':
+            if len(args) > 1:
+                raise UserError('extra arguments on command line %r' % args[1:])
+            flights_json = []
+            for i, flight in enumerate(sixty15.flight_book()):
+                flight_json = {}
+                flight_json['index'] = i
+                flight_json['date'] = flight.datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
+                minutes, seconds = divmod(flight.duration.seconds, 60)
+                hours, minutes = divmod(minutes, 60)
+                flight_json['duration'] = '%02d:%02d:%02d' % (hours, minutes, seconds)
+                flights_json.append(flight_json)
+            print json.dumps({'flights': flights_json}, indent=4, sort_keys=True)
         else:
             raise UserError('invalid command %r' % args)
     except UserError, e:

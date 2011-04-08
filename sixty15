@@ -108,8 +108,18 @@ class Flight(object):
         year, month, day = (int(x) for x in fields[1].split('.'))
         hour, minute, second = (int(x) for x in fields[2].split(':'))
         self.datetime = datetime.datetime(year + 2000, month, day, hour, minute, second, tzinfo=UTC())
+        self.utc_offset = int(fields[3])
         hours, minutes, seconds = (int(x) for x in fields[4].split(':'))
         self.duration = datetime.timedelta(seconds=3600 * hours + 60 * minutes + seconds)
+        self.altitude_offset = int(fields[5])
+        self.altitude_max = int(fields[6])
+        self.altitude_min = int(fields[7])
+        self.vario_max = float(fields[8])
+        self.vario_min = float(fields[9])
+        self.speed_max = float(fields[10])
+        self.pilot_name = fields[11].strip()
+        self.glider_type = fields[12].strip()
+        self.glider_id = fields[13].strip()
 
 
 class SerialIO(object):
@@ -334,9 +344,19 @@ def main(argv):
                 flight_json = {}
                 flight_json['index'] = i
                 flight_json['date'] = flight.datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
+                flight_json['utc_offset'] = flight.utc_offset
                 minutes, seconds = divmod(flight.duration.seconds, 60)
                 hours, minutes = divmod(minutes, 60)
                 flight_json['duration'] = '%02d:%02d:%02d' % (hours, minutes, seconds)
+                flight_json['altitude_offset'] = flight.altitude_offset
+                flight_json['altitude_max'] = flight.altitude_max
+                flight_json['altitude_min'] = flight.altitude_min
+                flight_json['vario_max'] = flight.vario_max
+                flight_json['vario_min'] = flight.vario_min
+                flight_json['speed_max'] = flight.speed_max
+                flight_json['pilot_name'] = flight.pilot_name
+                flight_json['glider_type'] = flight.glider_type
+                flight_json['glider_id'] = flight.glider_id
                 flights_json.append(flight_json)
             print json.dumps({'flights': flights_json}, indent=4, sort_keys=True)
         else:

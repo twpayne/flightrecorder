@@ -21,6 +21,7 @@ from collections import deque
 import datetime
 from glob import glob
 import logging
+import json
 from optparse import OptionParser
 import os
 import os.path
@@ -308,6 +309,14 @@ def main(argv):
                     os.unlink(f.name)
                     raise
                 print
+    elif args[0] == 'id':
+        if len(args) > 1:
+            logging.error('extra arguments on command line %r' % args[1:])
+            return 1
+        d = {}
+        d['model'] = ['Flytec 6015', 'Brauniger IQ Basic'][sixty15.rpa(PA_DeviceTyp)[0]]
+        d['serial_number'] = sixty15.rpa(PA_DeviceNr)[0]
+        print json.dumps(d, indent=4, sort_keys=True)
     else:
         logging.error('invalid command %r' % args)
 

@@ -91,9 +91,9 @@ class Fifty20:
         self.software_version = snp.software_version
         self.pilot_name = snp.pilot_name.strip()
 
-    def readline(self):
+    def readline(self, timeout=1):
         if self.buffer == '':
-            self.buffer = self.io.read()
+            self.buffer = self.io.read(timeout)
         if self.buffer[0] == XON:
             self.buffer = self.buffer[1:]
             logging.debug('read XON')
@@ -108,7 +108,7 @@ class Fifty20:
 		index = self.buffer.find('\n')
 		if index == -1:
                     line += self.buffer
-                    self.buffer = self.io.read()
+                    self.buffer = self.io.read(timeout)
 		else:
                     line += self.buffer[:index + 1]
                     self.buffer = self.buffer[index + 1:]
@@ -119,13 +119,13 @@ class Fifty20:
         logging.info('write %r' % line)
         self.io.write(line)
 
-    def ieach(self, command, re=None):
+    def ieach(self, command, re=None, timeout=1):
         try:
             self.write(nmea.encode(command))
-            if self.readline() != XOFF:
+            if self.readline(timeout) != XOFF:
                 raise ProtocolError
             while True:
-		line = self.readline()
+		line = self.readline(timeout)
 		if line == XON:
                     break
 		elif re is None:
@@ -139,13 +139,13 @@ class Fifty20:
             self.io.flush()
             raise
 
-    def none(self, command):
-        for m in self.ieach(command):
+    def none(self, command, timeout):
+        for m in self.ieach(command, None, timeout):
             raise ProtocolError(m)
 
-    def one(self, command, re=None):
+    def one(self, command, re=None, timeout=1):
         result = None
-        for m in self.ieach(command, re):
+        for m in self.ieach(command, re, timeout):
             if not result is None:
                 raise ProtocolError(m)
             result = m
@@ -194,13 +194,13 @@ class Fifty20:
         return list(self.ipbrrts())
 
     def pbrsnp(self):
-        return SNP(*self.one('PBRSNP,', PBRSNP_RE).groups())
+        return SNP(*self.one('PBRSNP,', PBRSNP_RE, 0.2).groups())
 
     def pbrtl(self):
         tracks = []
         def igc(self, index):
             return lambda: self.pbrtr(index)
-        for m in self.ieach('PBRTL,', PBRTL_RE):
+        for m in self.ieach('PBRTL,', PBRTL_RE, 0.5):
             index = int(m.group(2))
             day, month, year, hour, minute, second = [int(i) for i in m.groups()[2:8]]
             hours, minutes, seconds = [int(i) for i in m.groups()[8:11]]

@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-#
-#   6015  Download IGC tracklogs from Brauniger IQ Basic and Flytec 6015 flight recorders
+#   sixty15.py  Flytec 6015 and Brauniger IQ Basic functions
 #   Copyright (C) 2011  Tom Payne <twpayne@gmail.com>
 #
 #   This program is free software: you can redistribute it and/or modify
@@ -19,18 +17,14 @@
 
 from collections import deque
 import datetime
-from glob import glob
 import logging
-import json
-from optparse import OptionParser
-import os
-import os.path
 import re
 import select
 import struct
-import sys
-from tempfile import NamedTemporaryFile
 import tty
+
+from .errors import ProtocolError, ReadError, TimeoutError, WriteError
+from .utils import UTC
 
 
 PA_DeviceNr = 0x00
@@ -53,51 +47,6 @@ PA_Vario_FLE = 0x10
 PA_Speed_FLE = 0x11
 
 PA_FORMAT = ['<I', 'B', '<I', 'B', '4B', '4B', '4B', '4B', '4B', '10C', '10C', '10C', '<l', '<i', 'B', '<i', '<I']
-
-
-DEVICE_GLOBS = {
-        'Darwin': ('/dev/cu.PL2303*', '/dev/cu.usbserial*',),
-        'FreeBSD': ('/dev/cuad*',),
-        'Linux': ('/dev/ttyUSB*',)}
-
-
-class Error(RuntimeError):
-
-    def __init__(self, message=None):
-        RuntimeError.__init__(self, message)
-        self.message = message
-
-
-class TimeoutError(Error):
-    pass
-
-
-class ReadError(Error):
-    pass
-
-
-class WriteError(Error):
-    pass
-
-
-class ProtocolError(Error):
-    pass
-
-
-class UserError(Error):
-    pass
-
-
-class UTC(datetime.tzinfo):
-
-    def utcoffset(self, dt):
-        return datetime.timedelta(0)
-
-    def tzname(self):
-        return "UTC"
-
-    def dst(self, dt):
-        return datetime.timedelta(0)
 
 
 class Flight(object):
@@ -239,6 +188,10 @@ class Sixty15(object):
     def __init__(self, io):
         self.io = io
         self.buffer = ''
+        self.manufacturer = self.rpa(PA_DeviceTyp)[0]
+        self.manufacturer_name = ['Flytec', 'Brauniger'][self.manufacturer]
+        self.model = ['6015', 'IQ Basic'][self.manufacturer]
+        self.serial_number = self.rpa(PA_DeviceNr)[0]
 
     def readline(self):
         line = self.io.readline()
@@ -261,10 +214,6 @@ class Sixty15(object):
             raise ProtocolError('unexpected response %r' % line)
 
     def flight_book(self):
-        serial_number = self.rpa(PA_DeviceNr)[0]
-        logging.info('serial number = %r' % serial_number)
-        manufacturer = ('FLY', 'BRA')[self.rpa(PA_DeviceTyp)[0]]
-        logging.info('manufacturer = %r' % manufacturer)
         self.write('ACT_20_00\r\n')
         flights = []
         while True:
@@ -278,7 +227,7 @@ class Sixty15(object):
 		index += 1
             else:
 		index = 1
-            flight.igc_filename = '%s-%s-%s-%02d.IGC' % (flight.datetime.strftime('%Y-%m-%d'), manufacturer, serial_number, index)
+            flight.igc_filename = '%s-%s-%s-%02d.IGC' % (flight.datetime.strftime('%Y-%m-%d'), ['FLY', 'BRA'][self.manufacturer], self.serial_number, index)
             date = flight.datetime.date()
         return flights
 
@@ -291,86 +240,3 @@ class Sixty15(object):
             if line.startswith('G'):
                 break
         return lines
-
-
-class RangeSet(object):
-
-    def __init__(self, s):
-        self.slices = []
-        for f in re.split(r'\s*,\s*', s):
-            m = re.match(r'\A(\d+)(?:-(\d+))?\Z', f)
-            if not m:
-                raise UserError('invalid range %r' % f)
-            start = int(m.group(1))
-            stop = int(m.group(2)) + 1 if m.group(2) else start + 1
-            self.slices.append(slice(start, stop))
-
-    def __contains__(self, x):
-        return any(sl.start <= x < sl.stop for sl in self.slices)
-
-
-def main(argv):
-    parser = OptionParser()
-    parser.add_option('-d', '--device', metavar='DEVICE', help='set device filename')
-    parser.add_option('-o', '--overwrite', action='store_true', help='re-download already downloaded tracklogs')
-    parser.add_option('-v', '--verbose', action='count', dest='level', help='show debugging information')
-    parser.set_defaults(level=0)
-    options, args = parser.parse_args(argv[1:])
-    if not args:
-        args = ('download',)
-    if not options.device:
-        for device_glob in DEVICE_GLOBS.get(os.uname()[0], ()):
-            for device in glob(device_glob):
-                if not options.device:
-                    options.device = device
-    if not options.device:
-        logging.error('Could not find device')
-        return 1
-    logging.basicConfig(level=logging.WARN - 10 * options.level)
-    if options.device == 'mock':
-        io = MockIO()
-    else:
-        io = SerialIO(options.device)
-    try:
-        sixty15 = Sixty15(io)
-        if args[0] == 'do' or args[0] == 'download':
-            range_sets = [RangeSet(arg) for arg in args[1:]]
-            for i, flight in enumerate(sixty15.flight_book()):
-                if range_sets and not any(i + 1 in rs for rs in range_sets):
-                    continue
-                if options.overwrite or not os.path.exists(flight.igc_filename):
-                    print 'Downloading %s...' % flight.igc_filename,
-                    f = NamedTemporaryFile(prefix='6015', delete=False)
-                    try:
-                        f.write(''.join(sixty15.get_igc_flight(flight)))
-                        f.close()
-                        os.rename(f.name, flight.igc_filename)
-                    except:
-                        os.unlink(f.name)
-                        raise
-                    print
-        elif args[0] == 'id':
-            if len(args) > 1:
-                raise UserError('extra arguments on command line %r' % args[1:])
-            d = {}
-            d['model'] = ['Flytec 6015', 'Brauniger IQ Basic'][sixty15.rpa(PA_DeviceTyp)[0]]
-            d['serial_number'] = sixty15.rpa(PA_DeviceNr)[0]
-            print json.dumps(d, indent=4, sort_keys=True)
-        elif args[0] == 'li' or args[0] == 'list':
-            if len(args) > 1:
-                raise UserError('extra arguments on command line %r' % args[1:])
-            flights_json = []
-            for i, flight in enumerate(sixty15.flight_book()):
-                flight_json = flight.to_json()
-                flight_json['index'] = i
-                flights_json.append(flight_json)
-            print json.dumps({'flights': flights_json}, indent=4, sort_keys=True)
-        else:
-            raise UserError('invalid command %r' % args)
-    except UserError, e:
-        print '%s: %s' % (os.path.basename(argv[0]), e.message)
-        return 1
-
-
-if __name__ == '__main__':
-    sys.exit(main(sys.argv))

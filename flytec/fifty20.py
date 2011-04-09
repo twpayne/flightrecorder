@@ -17,10 +17,7 @@
 
 import datetime
 import logging
-import os
 import re
-import select
-import tty
 
 from .common import Track, add_igc_filenames
 from .errors import ProtocolError, ReadError, TimeoutError, WriteError

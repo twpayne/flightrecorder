@@ -75,7 +75,7 @@ def main(argv):
                 if not options.device:
                     options.device = device
     if not options.device:
-        logging.error('Could not find device')
+        logging.error('Could not find serial port device')
         return 1
     logging.basicConfig(level=logging.WARN - 10 * options.level)
     if options.device == 'mock-6015':

@@ -18,6 +18,7 @@
 import logging
 import os
 import select
+import time
 import tty
 
 
@@ -34,12 +35,15 @@ class SerialIO(object):
         attr[tty.ISPEED] = attr[tty.OSPEED] = tty.B57600
         tty.tcsetattr(self.fd, tty.TCSAFLUSH, attr)
 
-    def read(self):
-        if select.select([self.fd], [], [], 1) == ([], [], []):
+    def read(self, timeout=1):
+        if select.select([self.fd], [], [], timeout) == ([], [], []):
             raise TimeoutError
-        return os.read(self.fd, 1024)
+        data = os.read(self.fd, 1024)
+        logging.debug('%.3f read %r (%d bytes)' % (time.time(), data, len(data)))
+        return data
 
     def write(self, line):
+        logging.debug('%.3f write %r (%d bytes)' % (time.time(), line, len(line)))
         if os.write(self.fd, line) != len(line):
             raise WriteError
 

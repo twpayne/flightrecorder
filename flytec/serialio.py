@@ -18,6 +18,7 @@
 import logging
 import os
 import select
+import termios
 import time
 import tty
 
@@ -28,12 +29,15 @@ from .errors import TimeoutError
 class SerialIO(object):
 
     def __init__(self, filename):
-        logging.info('opening %r' % filename)
-        self.fd = os.open(filename, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
-        tty.setraw(self.fd)
-        attr = tty.tcgetattr(self.fd)
-        attr[tty.ISPEED] = attr[tty.OSPEED] = tty.B57600
-        tty.tcsetattr(self.fd, tty.TCSAFLUSH, attr)
+        try:
+            logging.info('opening %r' % filename)
+            self.fd = os.open(filename, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
+            tty.setraw(self.fd)
+            attr = tty.tcgetattr(self.fd)
+            attr[tty.ISPEED] = attr[tty.OSPEED] = tty.B57600
+            tty.tcsetattr(self.fd, tty.TCSAFLUSH, attr)
+        except termios.error:
+            raise IOError
 
     def read(self, timeout=1):
         if select.select([self.fd], [], [], timeout) == ([], [], []):

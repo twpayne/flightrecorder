@@ -88,6 +88,8 @@ def main(argv):
                 try:
                     flight_recorder = klass(SerialIO(device))
                     break
+                except IOError:
+                    pass
                 except TimeoutError:
                     pass
             else:

@@ -196,7 +196,7 @@ class Fifty20:
     def pbrtl(self):
         tracks = []
         def igc(self, index):
-            return lambda: self.pbrtr(index)
+            return lambda: self.ipbrtr(index)
         for m in self.ieach('PBRTL,', PBRTL_RE, 0.5):
             index = int(m.group(2))
             day, month, year, hour, minute, second = (int(i) for i in m.groups()[2:8])

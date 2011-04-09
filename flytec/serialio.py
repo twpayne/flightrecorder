@@ -30,6 +30,7 @@ class SerialIO(object):
 
     def __init__(self, filename):
         try:
+            self.filename = filename
             logging.info('opening %r' % filename)
             self.fd = os.open(filename, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
             tty.setraw(self.fd)

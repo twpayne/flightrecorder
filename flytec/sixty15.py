@@ -212,7 +212,7 @@ class Sixty15(object):
         self.write('ACT_20_00\r\n')
         tracks = []
         def igc(self, index):
-            return lambda: self.act21(index)
+            return lambda: self.iact21(index)
         while True:
             line = self.readline(0.5)
             if line == 'Done\r\n':
@@ -239,15 +239,13 @@ class Sixty15(object):
                     igc=igc(self, index)))
         return add_igc_filenames(tracks, self.manufacturer, self.serial_number)
 
-    def act21(self, index):
-        lines = []
+    def iact21(self, index):
         self.write('ACT_21_%02X\r\n' % index)
         while True:
             line = self.readline()
-            lines.append(line)
+            yield line
             if line.startswith('G'):
                 break
-        return lines
 
     def to_json(self):
         return {

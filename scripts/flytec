@@ -116,11 +116,7 @@ def main(argv):
         elif args[0] == 'id':
             if len(args) > 1:
                 raise UserError('extra arguments on command line %r' % args[1:])
-            id_json = {}
-            id_json['manufacturer'] = ['Flytec', 'Brauniger'][flight_recorder.manufacturer]
-            id_json['model'] = flight_recorder.model
-            id_json['serial_number'] = flight_recorder.serial_number
-            print json.dumps(id_json, indent=4, sort_keys=True)
+            print json.dumps(flight_recorder.to_json(), indent=4, sort_keys=True)
         elif args[0] == 'li' or args[0] == 'list':
             if len(args) > 1:
                 raise UserError('extra arguments on command line %r' % args[1:])

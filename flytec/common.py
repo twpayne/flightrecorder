@@ -33,7 +33,6 @@ class Track(object):
             elif key == 'igc':
                 continue
             json[key] = value
-        print json
         return json
 
 

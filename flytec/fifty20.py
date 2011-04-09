@@ -89,7 +89,7 @@ class Fifty20:
         self.model = snp.model
         self.serial_number = re.sub(r'\A0+', '', snp.serial_number)
         self.software_version = snp.software_version
-        self.pilot_name = snp.pilot_name
+        self.pilot_name = snp.pilot_name.strip()
 
     def readline(self):
         if self.buffer == '':
@@ -239,6 +239,14 @@ class Fifty20:
             self.zero('PBRWPX,%-17s' % name)
         else:
             self.zero('PBRWPX,')
+
+    def to_json(self):
+        return {
+            'manufacturer': ['Flytec', 'Brauniger'][self.manufacturer],
+            'model': self.model,
+            'pilot_name': self.pilot_name,
+            'serial_number': self.serial_number,
+            'software_version': self.software_version}
 
     tracks = pbrtl
 

@@ -55,6 +55,7 @@ class MockSixty15IO(object):
         self.fa = [None] * 18
         self.fa[PA_DeviceNr] = [1234]
         self.fa[PA_DeviceTyp] = [0]
+        self.fa[PA_SoftVers] = [5678]
         self.tracks = []
         self.tracks.append((
             (0,  9, 11, 16, 12, 43,  3, 1,  0,  8, 53, -161, 978, 452, 3.49, -2.90, 1.38, 'not-set', 'not set', 'not set'), (
@@ -119,9 +120,10 @@ class Sixty15(object):
     def __init__(self, io):
         self.io = io
         self.buffer = ''
+        self.serial_number = self.rpa(PA_DeviceNr)[0]
         self.manufacturer = self.rpa(PA_DeviceTyp)[0]
         self.model = ['6015', 'IQ Basic'][self.manufacturer]
-        self.serial_number = self.rpa(PA_DeviceNr)[0]
+        self.software_version = self.rpa(PA_SoftVers)[0]
 
     def readline(self):
         line = ''
@@ -194,6 +196,13 @@ class Sixty15(object):
             if line.startswith('G'):
                 break
         return lines
+
+    def to_json(self):
+        return {
+            'manufacturer': ['Flytec', 'Brauniger'][self.manufacturer],
+            'model': self.model,
+            'serial_number': self.serial_number,
+            'software_version': self.software_version}
 
     tracks = act20
 

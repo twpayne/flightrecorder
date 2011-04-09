@@ -108,7 +108,7 @@ class MockSixty15IO(object):
             return
         logging.error('invalid or unimplemented command %r' % line)
 
-    def read(self):
+    def read(self, timeout):
         return self.lines.popleft()
 
     def flush(self):
@@ -125,13 +125,13 @@ class Sixty15(object):
         self.model = ['6015', 'IQ Basic'][self.manufacturer]
         self.software_version = self.rpa(PA_SoftVers)[0]
 
-    def readline(self):
+    def readline(self, timeout=1):
         line = ''
         while True:
             index = self.buffer.find('\r\n')
             if index == -1:
                 line += self.buffer
-                self.buffer = self.io.read()
+                self.buffer = self.io.read(timeout)
                 logging.debug('read %r' % self.buffer)
                 if len(self.buffer) == 0:
                     raise ReadError
@@ -147,7 +147,7 @@ class Sixty15(object):
 
     def rpa(self, parameter):
         self.write('RPA_%02X\r\n' % parameter)
-        line = self.readline()
+        line = self.readline(0.1)
         m = re.match(r'\ARPA_%02X_((?:[0-9A-F]{2})*)\r\n\Z' % parameter, line)
         if m:
             return struct.unpack(PA_FORMAT[parameter], ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(1))))
@@ -162,7 +162,7 @@ class Sixty15(object):
         def igc(self, index):
             return lambda: self.act21(index)
         while True:
-            line = self.readline()
+            line = self.readline(0.5)
             if line == 'Done\r\n':
                 break
             fields = re.split(r'\s*;\s*', line)

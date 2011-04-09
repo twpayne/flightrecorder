@@ -160,7 +160,7 @@ class Fifty20:
         while first < last:
             m = self.one('PBRMEMR,%04X' % first, PBRMEMR_RE)
             # FIXME check returned address
-            data = [i.decode('hex') for i in m.group(2).split(',')]
+            data = list(int(i, 16) for i in m.group(2).split(','))
             result.extend(data)
             first += len(data)
         return result[:length]
@@ -178,7 +178,7 @@ class Fifty20:
             else:
 		m = PBRRTS_RE2.match(l)
 		if m:
-                    index, count, routepoint_index = [int(i) for i in m.groups()[0:3]]
+                    index, count, routepoint_index = (int(i) for i in m.groups()[0:3])
                     routepoint_short_name = m.group(4)
                     routepoint_long_name = m.group(5)
                     routepoints.append(Routepoint(routepoint_short_name, routepoint_long_name))
@@ -199,8 +199,8 @@ class Fifty20:
             return lambda: self.pbrtr(index)
         for m in self.ieach('PBRTL,', PBRTL_RE, 0.5):
             index = int(m.group(2))
-            day, month, year, hour, minute, second = [int(i) for i in m.groups()[2:8]]
-            hours, minutes, seconds = [int(i) for i in m.groups()[8:11]]
+            day, month, year, hour, minute, second = (int(i) for i in m.groups()[2:8])
+            hours, minutes, seconds = (int(i) for i in m.groups()[8:11])
             tracks.append(Track(
                 count=int(m.group(1)),
                 index=index,

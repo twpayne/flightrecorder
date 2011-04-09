@@ -100,7 +100,7 @@ def main(argv):
         return 1
     try:
         if args[0] == 'do' or args[0] == 'download':
-            range_sets = [RangeSet(arg) for arg in args[1:]]
+            range_sets = list(RangeSet(arg) for arg in args[1:])
             for i, track in enumerate(flight_recorder.tracks()):
                 if range_sets and not any(i + 1 in rs for rs in range_sets):
                     continue

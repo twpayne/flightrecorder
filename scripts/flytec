@@ -51,15 +51,24 @@ class RangeSet(object):
     def __init__(self, s):
         self.slices = []
         for f in re.split(r'\s*,\s*', s):
-            m = re.match(r'\A(\d+)(?:-(\d+))?\Z', f)
+            m = re.match(r'\A(\d*)(?:(-)(\d*))?\Z', f)
             if not m:
                 raise UserError('invalid range %r' % f)
-            start = int(m.group(1))
-            stop = int(m.group(2)) + 1 if m.group(2) else start + 1
+            start = int(m.group(1)) if m.group(1) else None
+            if m.group(2):
+                stop = int(m.group(3)) if m.group(3) else None
+            else:
+                stop = start
             self.slices.append(slice(start, stop))
 
     def __contains__(self, x):
-        return any(sl.start <= x < sl.stop for sl in self.slices)
+        for sl in self.slices:
+            if sl.start is not None and x < sl.start:
+                continue
+            if sl.stop is not None and sl.stop < x:
+                continue
+            return True
+        return False
 
 
 def main(argv):

@@ -36,7 +36,7 @@ from flytec.fifty20 import Fifty20
 DEVICE_GLOBS = {
         'Darwin': ('/dev/cu.PL2303*', '/dev/cu.usbserial*',),
         'FreeBSD': ('/dev/cuad*',),
-        'Linux': ('/dev/ttyUSB*',)}
+        'Linux': ('/dev/ttyUSB*', '/dev/ttyS*')}
 
 
 class UserError(RuntimeError):

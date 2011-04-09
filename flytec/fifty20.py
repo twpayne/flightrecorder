@@ -84,7 +84,7 @@ class Fifty20:
         snp = self.pbrsnp()
         self.manufacturer = MANUFACTURER[snp.model]
         self.model = snp.model
-        self.serial_number = re.sub(r'\A0+', '', snp.serial_number)
+        self.serial_number = int(snp.serial_number)
         self.software_version = snp.software_version
         self.pilot_name = snp.pilot_name.strip()
 

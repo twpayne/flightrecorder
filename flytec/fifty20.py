@@ -247,3 +247,6 @@ class Fifty20:
 
     tracks = pbrtl
 
+    def check(self):
+        # FIXME
+        pass

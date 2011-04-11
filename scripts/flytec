@@ -173,6 +173,8 @@ def main(argv):
                 raise UserError('extra arguments on command line %r' % args[1:])
             sys.stdout.write(json.dumps({'tracks': [track.to_json() for track in flight_recorder.tracks()]}, indent=4, sort_keys=True))
             sys.stdout.write('\n')
+        elif args[0] == 'ch' or args[0] == 'check':
+            flight_recorder.check()
         else:
             raise UserError('invalid command %r' % args)
     except UserError, e:

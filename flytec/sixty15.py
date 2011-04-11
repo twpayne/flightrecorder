@@ -285,5 +285,8 @@ class Sixty15(object):
             'serial_number': self.serial_number,
             'software_version': self.software_version}
 
-    tracks = act20
+    def check(self):
+        self.act10()
+        self.act11()
 
+    tracks = act20

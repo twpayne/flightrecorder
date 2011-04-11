@@ -121,22 +121,6 @@ class MockSixty15IO(object):
             (1,  9, 10,  9,  8, 43, 27, 1,  0,  6, 19,    0, 580, 233, 1.90, -2.25, 0.77, 'not-set', 'not-set', 'not-set'), ('G\r\n',)))
 
     def write(self, line):
-        m = re.match(r'\ARFA_([0-9A-F]{2})\r\n\Z', line)
-        if m:
-            index = int(m.group(1), 16)
-            if self.fa[index] is None:
-                self.lines.append('No Par\r\n')
-            else:
-                self.lines.append('RFA_%02X_%s\r\n' % (index, ''.join('%02X' % ord(c) for c in struct.pack('<' + FA_FORMAT[index], *self.fa[index]))))
-            return
-        m = re.match(r'\ARPA_([0-9A-F]{2})\r\n\Z', line)
-        if m:
-            index = int(m.group(1), 16)
-            if self.pa[index] is None:
-                self.lines.append('No Par\r\n')
-            else:
-                self.lines.append('RPA_%02X_%s\r\n' % (index, ''.join('%02X' % ord(c) for c in struct.pack('<' + PA_FORMAT[index], *self.pa[index]))))
-            return
         if line == 'ACT_10_00\r\n':
             for key in sorted(FA_FORMAT.keys()):
                 self.lines.append('%6d; %6d\r\n' % (key, struct.calcsize(FA_FORMAT[key])))
@@ -155,6 +139,22 @@ class MockSixty15IO(object):
         m = re.match(r'\AACT_21_([0-9A-F]{2})\r\n\Z', line)
         if m:
             self.lines.extend(self.tracks[int(m.group(1), 16)][1])
+            return
+        m = re.match(r'\ARFA_([0-9A-F]{2})\r\n\Z', line)
+        if m:
+            index = int(m.group(1), 16)
+            if self.fa[index] is None:
+                self.lines.append('No Par\r\n')
+            else:
+                self.lines.append('RFA_%02X_%s\r\n' % (index, ''.join('%02X' % ord(c) for c in struct.pack('<' + FA_FORMAT[index], *self.fa[index]))))
+            return
+        m = re.match(r'\ARPA_([0-9A-F]{2})\r\n\Z', line)
+        if m:
+            index = int(m.group(1), 16)
+            if self.pa[index] is None:
+                self.lines.append('No Par\r\n')
+            else:
+                self.lines.append('RPA_%02X_%s\r\n' % (index, ''.join('%02X' % ord(c) for c in struct.pack('<' + PA_FORMAT[index], *self.pa[index]))))
             return
         logging.error('invalid or unimplemented command %r' % line)
 
@@ -195,23 +195,6 @@ class Sixty15(object):
     def write(self, line):
         logging.info('write %r' % line)
         self.io.write(line)
-
-    def rxa(self, x, parameter, format):
-        self.write('R%cA_%02X\r\n' % (x, parameter))
-        line = self.readline(0.1)
-        m = re.match(r'\AR%cA_%02X_((?:[0-9A-F]{2})*)\r\n\Z' % (x, parameter), line)
-        if m:
-            return struct.unpack(format, ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(1))))
-        elif line == 'No Par\r\n':
-            return None
-        else:
-            raise ProtocolError('unexpected response %r' % line)
-
-    def rfa(self, parameter):
-        return self.rxa('F', parameter, FA_FORMAT[parameter])
-
-    def rpa(self, parameter):
-        return self.rxa('P', parameter, PA_FORMAT[parameter])
 
     def act1x(self, x, table):
         self.write('ACT_%02X_00\r\n' % x)
@@ -271,6 +254,23 @@ class Sixty15(object):
             yield line
             if line.startswith('G'):
                 break
+
+    def rxa(self, x, parameter, format):
+        self.write('R%cA_%02X\r\n' % (x, parameter))
+        line = self.readline(0.1)
+        m = re.match(r'\AR%cA_%02X_((?:[0-9A-F]{2})*)\r\n\Z' % (x, parameter), line)
+        if m:
+            return struct.unpack(format, ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(1))))
+        elif line == 'No Par\r\n':
+            return None
+        else:
+            raise ProtocolError('unexpected response %r' % line)
+
+    def rfa(self, parameter):
+        return self.rxa('F', parameter, FA_FORMAT[parameter])
+
+    def rpa(self, parameter):
+        return self.rxa('P', parameter, PA_FORMAT[parameter])
 
     def to_json(self):
         return {

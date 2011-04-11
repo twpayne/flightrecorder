@@ -137,6 +137,16 @@ class MockSixty15IO(object):
             else:
                 self.lines.append('RPA_%02X_%s\r\n' % (index, ''.join('%02X' % ord(c) for c in struct.pack('<' + PA_FORMAT[index], *self.pa[index]))))
             return
+        if line == 'ACT_10_00\r\n':
+            for key in sorted(FA_FORMAT.keys()):
+                self.lines.append('%6d; %6d\r\n' % (key, struct.calcsize(FA_FORMAT[key])))
+            self.lines.append('Done\r\n')
+            return
+        if line == 'ACT_11_00\r\n':
+            for key in sorted(PA_FORMAT.keys()):
+                self.lines.append('%6d; %6d\r\n' % (key, struct.calcsize(PA_FORMAT[key])))
+            self.lines.append('Done\r\n')
+            return
         if line == 'ACT_20_00\r\n':
             for track in self.tracks:
                 self.lines.append('%6d; %02d.%02d.%02d; %02d:%02d:%02d; %8d; %02d:%02d:%02d; %8d; %8d; %8d; %8.2f; %8.2f; %8.2f;%16s;%16s;%16s\r\n' % track[0])
@@ -207,6 +217,26 @@ class Sixty15(object):
             return None
         else:
             raise ProtocolError('unexpected response %r' % line)
+
+    def act1x(self, x, table):
+        self.write('ACT_%02X_00\r\n' % x)
+        while True:
+            line = self.readline()
+            if line == 'Done\r\n':
+                break
+            index, size = map(int, re.split(r'\s*;\s*', line))
+            if index not in table:
+                logging.warning('field %d not found in table' % index)
+            elif struct.calcsize(table[index]) != size:
+                logging.error('field %d expected size %d, got %d' % (index, struct.calcsize(table[index]), size))
+            else:
+                logging.info('field %d size matches' % index)
+
+    def act10(self):
+        self.act1x(0x10, FA_FORMAT)
+
+    def act11(self):
+        self.act1x(0x11, PA_FORMAT)
 
     def act20(self):
         self.write('ACT_20_00\r\n')

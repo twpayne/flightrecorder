@@ -136,6 +136,9 @@ class MockSixty15IO(object):
                 self.lines.append('%6d; %02d.%02d.%02d; %02d:%02d:%02d; %8d; %02d:%02d:%02d; %8d; %8d; %8d; %8.2f; %8.2f; %8.2f;%16s;%16s;%16s\r\n' % track[0])
             self.lines.append('Done\r\n')
             return
+        if line == 'ACT_22_00\r\n':
+            self.tracks = []
+            self.lines.append('ACT_22_00 Done\r\n')
         m = re.match(r'\AACT_21_([0-9A-F]{2})\r\n\Z', line)
         if m:
             self.lines.extend(self.tracks[int(m.group(1), 16)][1])
@@ -254,6 +257,16 @@ class Sixty15(object):
             yield line
             if line.startswith('G'):
                 break
+
+    def act22(self, index):
+        self.write('ACT_22_00\r\n')
+        line = self.readline()
+        if line == 'ACT_22_00 Done\r\n':
+            return True
+        elif line == 'ACT_22_00 Fail\r\n':
+            return False
+        else:
+            raise ProtocolError('unexpected response %r' % line)
 
     def rxa(self, x, parameter, format):
         self.write('R%cA_%02X\r\n' % (x, parameter))

@@ -196,27 +196,22 @@ class Sixty15(object):
         logging.info('write %r' % line)
         self.io.write(line)
 
-    def rfa(self, parameter):
-        self.write('RFA_%02X\r\n' % parameter)
+    def rxa(self, x, parameter, format):
+        self.write('R%cA_%02X\r\n' % (x, parameter))
         line = self.readline(0.1)
-        m = re.match(r'\ARFA_%02X_((?:[0-9A-F]{2})*)\r\n\Z' % parameter, line)
+        m = re.match(r'\AR%cA_%02X_((?:[0-9A-F]{2})*)\r\n\Z' % (x, parameter), line)
         if m:
-            return struct.unpack(FA_FORMAT[parameter], ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(1))))
+            return struct.unpack(format, ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(1))))
         elif line == 'No Par\r\n':
             return None
         else:
             raise ProtocolError('unexpected response %r' % line)
 
+    def rfa(self, parameter):
+        return self.rxa('F', parameter, FA_FORMAT[parameter])
+
     def rpa(self, parameter):
-        self.write('RPA_%02X\r\n' % parameter)
-        line = self.readline(0.1)
-        m = re.match(r'\ARPA_%02X_((?:[0-9A-F]{2})*)\r\n\Z' % parameter, line)
-        if m:
-            return struct.unpack(PA_FORMAT[parameter], ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(1))))
-        elif line == 'No Par\r\n':
-            return None
-        else:
-            raise ProtocolError('unexpected response %r' % line)
+        return self.rxa('P', parameter, PA_FORMAT[parameter])
 
     def act1x(self, x, table):
         self.write('ACT_%02X_00\r\n' % x)

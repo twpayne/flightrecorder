@@ -28,6 +28,7 @@ import re
 import sys
 import time
 from tempfile import NamedTemporaryFile
+import zipfile
 
 from flytec import Flytec
 from flytec.utc import UTC
@@ -71,66 +72,75 @@ def main(argv):
     parser.add_option('-d', '--device', metavar='DEVICE', help='set device filename')
     parser.add_option('-o', '--overwrite', action='store_true', help='re-download already downloaded tracklogs')
     parser.add_option('-v', '--verbose', action='count', dest='level', help='show debugging information')
+    parser.add_option('--output', metavar='FILENAME', help='set zip filename')
     parser.set_defaults(level=0)
+    parser.set_defaults(output='tracklogs.zip')
     options, args = parser.parse_args(argv[1:])
     logging.basicConfig(level=logging.WARN - 10 * options.level)
     try:
         flytec = Flytec(options.device)
         if flytec is None:
             raise UserError('no flight recorder detected')
-        if len(args) == 0 or args[0] == 'do' or args[0] == 'download':
+        if len(args) == 0 or args[0] in ('do', 'download', 'zi', 'zip'):
             sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (basename, flytec.manufacturer_name, flytec.model, flytec.serial_number, flytec.pilot_name, flytec.io.filename))
+            zf = zipfile.ZipFile(options.output, 'w') if args[0] in ('zi', 'zip') else None
             count = 0
             range_sets = list(RangeSet(arg) for arg in args[1:])
             for i, track in enumerate(flytec.tracks):
                 if range_sets and not any(i + 1 in rs for rs in range_sets):
                     continue
-                if options.overwrite or not os.path.exists(track.igc_filename):
-                    sys.stdout.write('%s: downloading %s    0%%  --:--' % (basename, track.igc_filename))
-                    output = NamedTemporaryFile(prefix='flytec', delete=False)
-                    try:
-                        here = track.datetime
-                        percentage, remaining = 0, None
-                        start = time.time()
-                        for line in track.igc:
-                            output.write(line)
-                            m = re.match(r'\AB(\d\d)(\d\d)(\d\d)', line)
-                            if m:
-                                hour, minute, second = (int(g) for g in m.groups())
-                                here = here.replace(hour=hour, minute=minute, second=second)
-                            m = re.match(r'\AHFDTE(\d\d)(\d\d)(\d\d)', line)
-                            if m:
-                                day, month, year = (int(g) for g in m.groups())
-                                here = datetime.datetime(2000 + year, month, day, 0, 0, 0, tzinfo=UTC())
-                            prev_percentage = percentage
-                            percentage = int(100 * (here - track.datetime).seconds / track.duration.seconds)
-                            percentage = max(min(percentage, 100), 0)
-                            prev_remaining = remaining
-                            now = time.time()
-                            if here == track.datetime or now - start < 2:
-                                remaining = None
-                            else:
-                                remaining = (now - start) * max((track.datetime + track.duration - here).seconds, 0) / (here - track.datetime).seconds
-                                remaining = max(remaining, 0)
-                                if prev_remaining is not None:
-                                    remaining = min(remaining, prev_remaining)
-                            if percentage != prev_percentage or remaining != prev_remaining:
-                                sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b%3d%%  ' % percentage)
-                                if remaining is None:
-                                    sys.stdout.write('--:--')
-                                else:
-                                    sys.stdout.write('%02d:%02d' % divmod(remaining, 60))
-                                sys.stdout.flush()
-                        output.close()
-                        os.rename(output.name, track.igc_filename)
-                        duration = time.time() - start
-                        sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
-                        count += 1
-                    except:
-                        os.unlink(output.name)
-                        raise
-                else:
+                if zf is None and os.path.exists(track.igc_filename) and not options.overwrite:
                     sys.stdout.write('%s: skipping %s\n' % (basename, track.igc_filename))
+                sys.stdout.write('%s: downloading %s    0%%  --:--' % (basename, track.igc_filename))
+                lines = []
+                here = track.datetime
+                percentage, remaining = 0, None
+                start = time.time()
+                for line in track.igc:
+                    lines.append(line)
+                    m = re.match(r'\AB(\d\d)(\d\d)(\d\d)', line)
+                    if m:
+                        hour, minute, second = (int(g) for g in m.groups())
+                        here = here.replace(hour=hour, minute=minute, second=second)
+                    m = re.match(r'\AHFDTE(\d\d)(\d\d)(\d\d)', line)
+                    if m:
+                        day, month, year = (int(g) for g in m.groups())
+                        here = datetime.datetime(2000 + year, month, day, 0, 0, 0, tzinfo=UTC())
+                    prev_percentage = percentage
+                    percentage = int(100 * (here - track.datetime).seconds / track.duration.seconds)
+                    percentage = max(min(percentage, 100), 0)
+                    prev_remaining = remaining
+                    now = time.time()
+                    if here == track.datetime or now - start < 2:
+                        remaining = None
+                    else:
+                        remaining = (now - start) * max((track.datetime + track.duration - here).seconds, 0) / (here - track.datetime).seconds
+                        remaining = max(remaining, 0)
+                        if prev_remaining is not None:
+                            remaining = min(remaining, prev_remaining)
+                    if percentage != prev_percentage or remaining != prev_remaining:
+                        sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b%3d%%  ' % percentage)
+                        if remaining is None:
+                            sys.stdout.write('--:--')
+                        else:
+                            sys.stdout.write('%02d:%02d' % divmod(remaining, 60))
+                        sys.stdout.flush()
+                if zf:
+                    zi = zipfile.ZipInfo(track.igc_filename)
+                    zi.date_time = (track.datetime + track.duration).timetuple()[:6]
+                    zi.external_attr = 0644 << 16
+                    zf.writestr(zi, ''.join(track.igc))
+                else:
+                    output = NamedTemporaryFile(prefix='flytec', delete=False)
+                    for line in lines:
+                        output.write(line)
+                    output.close()
+                    os.rename(output.name, track.igc_filename)
+                duration = time.time() - start
+                sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
+                count += 1
+            if zf:
+                zf.close()
             sys.stdout.write('%s: %d tracklogs downloaded\n' % (basename, count))
         elif args[0] == 'id':
             if len(args) > 1:

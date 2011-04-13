@@ -61,8 +61,8 @@ class SNP:
 
     def __init__(self, model, pilot_name, serial_number, software_version):
         self.model = model
-        self.pilot_name = pilot_name
-        self.serial_number = serial_number
+        self.pilot_name = pilot_name.strip()
+        self.serial_number = int(serial_number)
         self.software_version = software_version
 
 

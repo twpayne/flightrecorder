@@ -178,6 +178,7 @@ class Sixty15(object):
         self.model = ['6015', 'IQ Basic'][self.manufacturer]
         self.software_version = str(self.rpa(PA_SoftVers)[0])
         self.pilot_name = self.rfa(FA_Owner)[0].strip()
+        self._tracks = None
 
     def readline(self, timeout=1):
         line = ''
@@ -297,4 +298,8 @@ class Sixty15(object):
         self.act10()
         self.act11()
 
-    tracks = act20
+    @property
+    def tracks(self):
+        if self._tracks is None:
+            self.tracks_ = self.act20()
+        return self.tracks_

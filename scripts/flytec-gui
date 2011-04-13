@@ -91,7 +91,7 @@ class TracksTreeView(gtk.TreeView):
         model = self.get_model()
         model.freeze_notify()
         try:
-            for track in self.flytec.tracks():
+            for track in self.flytec.tracks:
                 timedelta = track.datetime - datetime.datetime(2000, 1, 1, tzinfo=UTC())
                 intdatetime = 24 * 60 * 60 * timedelta.days + timedelta.seconds
                 intduration = 24 * 60 * 60 * track.duration.days + track.duration.seconds

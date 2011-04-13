@@ -82,7 +82,7 @@ def main(argv):
             sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (basename, flytec.manufacturer_name, flytec.model, flytec.serial_number, flytec.pilot_name, flytec.io.filename))
             count = 0
             range_sets = list(RangeSet(arg) for arg in args[1:])
-            for i, track in enumerate(flytec.tracks()):
+            for i, track in enumerate(flytec.tracks):
                 if range_sets and not any(i + 1 in rs for rs in range_sets):
                     continue
                 if options.overwrite or not os.path.exists(track.igc_filename):
@@ -140,7 +140,7 @@ def main(argv):
         elif args[0] == 'li' or args[0] == 'list':
             if len(args) > 1:
                 raise UserError('extra arguments on command line %r' % args[1:])
-            sys.stdout.write(json.dumps({'tracks': [track.to_json() for track in flytec.tracks()]}, indent=4, sort_keys=True))
+            sys.stdout.write(json.dumps({'tracks': [track.to_json() for track in flytec.tracks]}, indent=4, sort_keys=True))
             sys.stdout.write('\n')
         elif args[0] == 'ch' or args[0] == 'check':
             flytec.check()

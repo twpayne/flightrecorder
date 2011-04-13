@@ -87,6 +87,7 @@ class Fifty20:
         self.serial_number = int(snp.serial_number)
         self.software_version = snp.software_version
         self.pilot_name = snp.pilot_name.strip()
+        self._tracks = None
 
     def readline(self, timeout=1):
         if self.buffer == '':
@@ -245,7 +246,11 @@ class Fifty20:
             'serial_number': self.serial_number,
             'software_version': self.software_version}
 
-    tracks = pbrtl
+    @property
+    def tracks(self):
+        if self._tracks is None:
+            self._tracks = self.pbrtl()
+        return self._tracks
 
     def check(self):
         # FIXME

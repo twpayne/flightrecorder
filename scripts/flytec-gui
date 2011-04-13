@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import datetime
-from flytec import Flytec, POSIXSerialIO
 import logging
 import optparse
 import os
@@ -9,11 +8,13 @@ import pango
 import pygtk
 import re
 import tempfile
-import utc
 import zipfile
 pygtk.require('2.0')
 import gtk
 import gobject
+
+from flytec import Flytec, MANUFACTURER_NAME
+from flytec.utc import UTC
 
 #
 # Page
@@ -52,9 +53,9 @@ class AboutView(gtk.Table):
         self.connect_after('realize', self.after_realize)
 
     def after_realize(self, data):
-        self.instrument_label.set_text('%s %s' % (self.flytec.manufacturer[2], self.flytec.instrument))
+        self.instrument_label.set_text('%s %s' % (MANUFACTURER_NAME[self.flytec.manufacturer], self.flytec.model))
         self.pilot_name_label.set_text(self.flytec.pilot_name)
-        self.serial_number_label.set_text(self.flytec.serial_number)
+        self.serial_number_label.set_text(str(self.flytec.serial_number))
         self.software_version_label.set_text(self.flytec.software_version)
 
 #
@@ -90,8 +91,8 @@ class TracksTreeView(gtk.TreeView):
         model = self.get_model()
         model.freeze_notify()
         try:
-            for track in self.flytec.pbrtl():
-                timedelta = track.datetime - datetime.datetime(2000, 1, 1, tzinfo=utc.UTC())
+            for track in self.flytec.tracks():
+                timedelta = track.datetime - datetime.datetime(2000, 1, 1, tzinfo=UTC())
                 intdatetime = 24 * 60 * 60 * timedelta.days + timedelta.seconds
                 intduration = 24 * 60 * 60 * track.duration.days + track.duration.seconds
                 model.append(row=[track, str(track.datetime), intdatetime, str(track.duration), intduration, track.igc_filename])
@@ -128,7 +129,8 @@ class TracksView(gtk.HBox):
     def on_save(self, data):
         for track in self.tracks_tree_view.iselected_tracks():
             (fd, path) = tempfile.mkstemp(dir='')
-            for line in track.igc: os.write(fd, line)
+            for line in track.igc():
+                os.write(fd, line)
             os.close(fd)
             os.rename(path, track.igc_filename)
 
@@ -185,7 +187,7 @@ class WaypointsView(gtk.TreeView):
         model = self.get_model()
         model.freeze_notify()
         try:
-            for waypoint in self.flytec.pbrwps():
+            for waypoint in self.flytec.waypoints():
                 deg, mmin = divmod(abs(waypoint.lat), 60000)
                 min, mmin = divmod(mmin, 1000)
                 if waypoint.lat < 0: hemi = 'S'
@@ -224,7 +226,7 @@ class RoutesView(gtk.TreeView):
         model = self.get_model()
         model.freeze_notify()
         try:
-            for route in self.flytec.pbrrts():
+            for route in self.flytec.routes():
                 iter = model.append(None, row=[route, route.name, None])
                 for routepoint in route.routepoints:
                     model.append(iter, row=[routepoint, routepoint.long_name, routepoint.short_name])
@@ -283,10 +285,10 @@ class MainWindow(gtk.Window):
         vbox = gtk.VBox()
         notebook = gtk.Notebook()
         notebook.append_page(Page(TracksView(self.flytec)), gtk.Label('Tracks'))
-        notebook.append_page(Page(WaypointsView(self.flytec)), gtk.Label('Waypoints'))
-        notebook.append_page(Page(RoutesView(self.flytec)), gtk.Label('Routes'))
+        #notebook.append_page(Page(WaypointsView(self.flytec)), gtk.Label('Waypoints'))
+        #notebook.append_page(Page(RoutesView(self.flytec)), gtk.Label('Routes'))
         notebook.append_page(Page(AboutView(self.flytec)), gtk.Label('About'))
-        notebook.append_page(Page(LogView(self.flytec)), gtk.Label('Log'))
+        #notebook.append_page(Page(LogView(self.flytec)), gtk.Label('Log'))
         vbox.pack_start(notebook)
         hbuttonbox = gtk.HButtonBox()
         button = gtk.Button(stock=gtk.STOCK_QUIT)
@@ -297,7 +299,7 @@ class MainWindow(gtk.Window):
         self.connect_after('realize', self.after_realize)
 
     def after_realize(self, data):
-        self.set_title('%s %s #%s (%s)' % (self.flytec.manufacturer[2], self.flytec.instrument, self.flytec.serial_number, self.flytec.pilot_name))
+        self.set_title('%s %s #%s (%s)' % (MANUFACTURER_NAME[self.flytec.manufacturer], self.flytec.model, self.flytec.serial_number, self.flytec.pilot_name))
 
     def on_quit(self, data):
         self.destroy()
@@ -311,7 +313,7 @@ if __name__ == '__main__':
     op = optparse.OptionParser()
     op.add_option('-d', '--device', dest='device', metavar='DEVICE')
     options, args = op.parse_args()
-    flytec = Flytec(POSIXSerialIO(options.device or '/dev/ttyUSB0'))
+    flytec = Flytec(options.device)
     window = MainWindow(flytec)
     window.connect('destroy', gtk.main_quit)
     window.show_all()

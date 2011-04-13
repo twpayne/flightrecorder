@@ -50,7 +50,9 @@ def Flytec(device=None):
             continue
         for klass in Sixty15, Fifty20:
             try:
-                return klass(io)
+                flytec = klass(io)
+                flytec.manufacturer
+                return flytec
             except TimeoutError:
                 pass
     return None

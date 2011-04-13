@@ -173,11 +173,11 @@ class Sixty15(object):
     def __init__(self, io):
         self.io = io
         self.buffer = ''
-        self.serial_number = self.rpa(PA_DeviceNr)[0]
-        self.manufacturer = self.rpa(PA_DeviceTyp)[0]
-        self.model = ['6015', 'IQ Basic'][self.manufacturer]
-        self.software_version = str(self.rpa(PA_SoftVers)[0])
-        self.pilot_name = self.rfa(FA_Owner)[0].strip()
+        self._serial_number = None
+        self._manufacturer = None
+        self._model = None
+        self._software_version = None
+        self._pilot_name = None
         self._tracks = None
 
     def readline(self, timeout=1):
@@ -299,7 +299,37 @@ class Sixty15(object):
         self.act11()
 
     @property
+    def manufacturer(self):
+        if self._manufacturer is None:
+            self._manufacturer = self.rpa(PA_DeviceTyp)[0]
+        return self._manufacturer
+
+    @property
+    def model(self):
+        if self._model is None:
+            self._model = ['6015', 'IQ Basic'][self.manufacturer]
+        return self._model
+
+    @property
+    def serial_number(self):
+        if self._serial_number is None:
+            self._serial_number = self.rpa(PA_DeviceNr)[0]
+        return self._serial_number
+
+    @property
+    def software_version(self):
+        if self._software_version is None:
+            self._software_version = str(self.rpa(PA_SoftVers)[0])
+        return self._software_version
+
+    @property
+    def pilot_name(self):
+        if self._pilot_name is None:
+            self._pilot_name = self.rfa(FA_Owner)[0].strip()
+        return self._pilot_name
+
+    @property
     def tracks(self):
         if self._tracks is None:
-            self.tracks_ = self.act20()
-        return self.tracks_
+            self._tracks = self.act20()
+        return self._tracks

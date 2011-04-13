@@ -81,12 +81,7 @@ class Fifty20:
     def __init__(self, io):
         self.io = io
         self.buffer = ''
-        snp = self.pbrsnp()
-        self.manufacturer = MANUFACTURER[snp.model]
-        self.model = snp.model
-        self.serial_number = int(snp.serial_number)
-        self.software_version = snp.software_version
-        self.pilot_name = snp.pilot_name.strip()
+        self._snp = None
         self._tracks = None
 
     def readline(self, timeout=1):
@@ -151,6 +146,7 @@ class Fifty20:
 
     def pbrconf(self):
         self.none('PBRCONF,')
+        self._snp = None
 
     def ipbrigc(self):
         return self.ieach('PBRIGC,')
@@ -240,11 +236,41 @@ class Fifty20:
 
     def to_json(self):
         return {
-            'manufacturer': MANUFACTURER_NAME[self.manufacturer],
+            'manufacturer': self.manufacturer_name,
             'model': self.model,
             'pilot_name': self.pilot_name,
             'serial_number': self.serial_number,
             'software_version': self.software_version}
+
+    @property
+    def manufacturer_name(self):
+        return MANUFACTURER_NAME[self.manufacturer]
+
+    @property
+    def manufacturer(self):
+        return MANUFACTURER[self.snp.model]
+
+    @property
+    def model(self):
+        return self.snp.model
+
+    @property
+    def pilot_name(self):
+        return self.snp.pilot_name
+
+    @property
+    def serial_number(self):
+        return self.snp.serial_number
+
+    @property
+    def snp(self):
+        if self._snp is None:
+            self._snp = self.pbrsnp()
+        return self._snp
+
+    @property
+    def software_version(self):
+        return self.snp.software_version
 
     @property
     def tracks(self):

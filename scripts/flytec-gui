@@ -144,10 +144,10 @@ class TracksView(gtk.HBox):
         if dialog.run() == gtk.RESPONSE_ACCEPT:
             zf = zipfile.ZipFile(dialog.get_filename(), 'w')
             for track in self.tracks_tree_view.iselected_tracks():
-                ntf = tempfile.NamedTemporaryFile()
-                for line in track.igc: ntf.write(line)
-                ntf.flush()
-                zf.write(ntf.name, track.igc_filename)
+                zi = zipfile.ZipInfo(track.igc_filename)
+                zi.date_time = (track.datetime + track.duration).timetuple()[:6]
+                zi.external_attr = 0644 << 16
+                zf.writestr(zi, ''.join(track.igc))
             zf.close()
         dialog.destroy()
 

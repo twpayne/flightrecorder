@@ -22,7 +22,7 @@ import re
 from .common import Track, add_igc_filenames
 from .errors import ProtocolError, ReadError, TimeoutError, WriteError
 import nmea
-from .utils import UTC
+from .utc import UTC
 
 
 MANUFACTURER = {}

@@ -30,7 +30,7 @@ import time
 from tempfile import NamedTemporaryFile
 
 from flytec import Flytec
-from flytec.utils import UTC
+from flytec.utc import UTC
 
 
 class UserError(RuntimeError):

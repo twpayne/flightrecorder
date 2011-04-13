@@ -1,4 +1,4 @@
-#   utils.py  Flytec and Brauniger utility functions
+#   utc.py  UTC timezone
 #   Copyright (C) 2011  Tom Payne <twpayne@gmail.com>
 #
 #   This program is free software: you can redistribute it and/or modify

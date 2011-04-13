@@ -21,7 +21,7 @@ import logging
 import re
 import struct
 
-from .common import Track, add_igc_filenames
+from .common import Track, add_igc_filenames, MANUFACTURER_NAME
 from .errors import ProtocolError, ReadError, TimeoutError, WriteError
 from .utc import UTC
 
@@ -287,7 +287,7 @@ class Sixty15(object):
 
     def to_json(self):
         return {
-            'manufacturer': ['Flytec', 'Brauniger'][self.manufacturer],
+            'manufacturer': MANUFACTURER_NAME[self.manufacturer],
             'model': self.model,
             'pilot_name': self.pilot_name,
             'serial_number': self.serial_number,

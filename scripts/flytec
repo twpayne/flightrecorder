@@ -79,7 +79,7 @@ def main(argv):
         if flytec is None:
             raise UserError('no flight recorder detected')
         if len(args) == 0 or args[0] == 'do' or args[0] == 'download':
-            sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (basename, ['Flytec', 'Brauniger'][flytec.manufacturer], flytec.model, flytec.serial_number, flytec.pilot_name, flytec.io.filename))
+            sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (basename, flytec.manufacturer_name, flytec.model, flytec.serial_number, flytec.pilot_name, flytec.io.filename))
             count = 0
             range_sets = list(RangeSet(arg) for arg in args[1:])
             for i, track in enumerate(flytec.tracks()):

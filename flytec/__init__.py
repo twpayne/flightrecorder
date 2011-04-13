@@ -15,7 +15,8 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from .common import MANUFACTURER_NAME
 from .flytec import Flytec
 
 
-__all__ = ['Flytec']
+__all__ = ['Flytec', 'MANUFACTURER_NAME']

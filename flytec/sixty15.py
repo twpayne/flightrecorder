@@ -176,7 +176,7 @@ class Sixty15(object):
         self.serial_number = self.rpa(PA_DeviceNr)[0]
         self.manufacturer = self.rpa(PA_DeviceTyp)[0]
         self.model = ['6015', 'IQ Basic'][self.manufacturer]
-        self.software_version = self.rpa(PA_SoftVers)[0]
+        self.software_version = str(self.rpa(PA_SoftVers)[0])
         self.pilot_name = self.rfa(FA_Owner)[0].strip()
 
     def readline(self, timeout=1):

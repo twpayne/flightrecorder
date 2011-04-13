@@ -129,7 +129,7 @@ class TracksView(gtk.HBox):
     def on_save(self, data):
         for track in self.tracks_tree_view.iselected_tracks():
             (fd, path) = tempfile.mkstemp(dir='')
-            for line in track.igc():
+            for line in track.igc:
                 os.write(fd, line)
             os.close(fd)
             os.rename(path, track.igc_filename)

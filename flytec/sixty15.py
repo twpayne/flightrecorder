@@ -223,7 +223,7 @@ class Sixty15(object):
     def act20(self):
         self.write('ACT_20_00\r\n')
         tracks = []
-        def igc(self, index):
+        def igc_lambda(self, index):
             return lambda: self.iact21(index)
         while True:
             line = self.readline(0.5)
@@ -248,7 +248,7 @@ class Sixty15(object):
                     pilot_name=fields[11].strip(),
                     glider_type=fields[12].strip(),
                     glider_id=fields[13].strip(),
-                    igc=igc(self, index)))
+                    _igc_lambda=igc_lambda(self, index)))
         return add_igc_filenames(tracks, self.manufacturer, self.serial_number)
 
     def iact21(self, index):

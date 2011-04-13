@@ -92,7 +92,7 @@ def main(argv):
                         here = track.datetime
                         percentage, remaining = 0, None
                         start = time.time()
-                        for line in track.igc():
+                        for line in track.igc:
                             output.write(line)
                             m = re.match(r'\AB(\d\d)(\d\d)(\d\d)', line)
                             if m:

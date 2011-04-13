@@ -21,20 +21,32 @@ MANUFACTURER_NAME = ('Flytec', 'Brauniger')
 class Track(object):
 
     def __init__(self, **kwargs):
+        self._igc = None
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    @property
+    def igc(self):
+        if self._igc is None:
+            self._igc = []
+            for line in self._igc_lambda():
+                yield line
+                self._igc.append(line)
+        else:
+            for line in self._igc:
+                yield line
 
     def to_json(self):
         json = {}
         for key, value in self.__dict__.items():
-            if key == 'datetime':
+            if key.startswith('_'):
+                continue
+            elif key == 'datetime':
                 value = value.strftime('%Y-%m-%dT%H:%M:%SZ')
             elif key == 'duration':
                 minutes, seconds = divmod(value.seconds, 60)
                 hours, minutes = divmod(minutes, 60)
                 value = '%02d:%02d:%02d' % (hours, minutes, seconds)
-            elif key == 'igc':
-                continue
             json[key] = value
         return json
 

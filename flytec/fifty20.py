@@ -192,7 +192,7 @@ class Fifty20:
 
     def pbrtl(self):
         tracks = []
-        def igc(self, index):
+        def igc_lambda(self, index):
             return lambda: self.ipbrtr(index)
         for m in self.ieach('PBRTL,', PBRTL_RE, 0.5):
             index = int(m.group(2))
@@ -203,7 +203,7 @@ class Fifty20:
                 index=index,
                 datetime=datetime.datetime(year + 2000, month, day, hour, minute, second, tzinfo=UTC()),
                 duration=datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds),
-                igc=igc(self, index)))
+                _igc_lambda=igc_lambda(self, index)))
         return add_igc_filenames(tracks, self.manufacturer, self.serial_number)
 
     def ipbrtr(self, index):

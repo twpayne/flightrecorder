@@ -29,17 +29,8 @@ import sys
 import time
 from tempfile import NamedTemporaryFile
 
-from flytec.errors import TimeoutError
-from flytec.serialio import SerialIO
-from flytec.sixty15 import MockSixty15IO, Sixty15
-from flytec.fifty20 import Fifty20
+from flytec import Flytec
 from flytec.utils import UTC
-
-
-DEVICE_GLOBS = {
-        'Darwin': ('/dev/cu.PL2303*', '/dev/cu.usbserial*',),
-        'FreeBSD': ('/dev/cuad*',),
-        'Linux': ('/dev/ttyUSB*', '/dev/ttyS*')}
 
 
 class UserError(RuntimeError):
@@ -84,36 +75,14 @@ def main(argv):
     options, args = parser.parse_args(argv[1:])
     logging.basicConfig(level=logging.WARN - 10 * options.level)
     try:
-        if options.device:
-            devices = (options.device,)
-        else:
-            device_globs = DEVICE_GLOBS.get(os.uname()[0], ())
-            devices = list(filename for device_glob in device_globs for filename in sorted(glob(device_glob)))
-            if not devices:
-                raise UserError('could not find serial port device')
-        flight_recorder = None
-        for device in devices:
-            if device == 'mock-6015':
-                flight_recorder = Sixty15(MockSixty15IO())
-            else:
-                for klass in Sixty15, Fifty20:
-                    try:
-                        flight_recorder = klass(SerialIO(device))
-                        break
-                    except IOError:
-                        pass
-                    except TimeoutError:
-                        pass
-                else:
-                    continue
-            break
-        if flight_recorder is None:
+        flytec = Flytec(options.device)
+        if flytec is None:
             raise UserError('no flight recorder detected')
         if len(args) == 0 or args[0] == 'do' or args[0] == 'download':
-            sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (basename, ['Flytec', 'Brauniger'][flight_recorder.manufacturer], flight_recorder.model, flight_recorder.serial_number, flight_recorder.pilot_name, flight_recorder.io.filename))
+            sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (basename, ['Flytec', 'Brauniger'][flytec.manufacturer], flytec.model, flytec.serial_number, flytec.pilot_name, flytec.io.filename))
             count = 0
             range_sets = list(RangeSet(arg) for arg in args[1:])
-            for i, track in enumerate(flight_recorder.tracks()):
+            for i, track in enumerate(flytec.tracks()):
                 if range_sets and not any(i + 1 in rs for rs in range_sets):
                     continue
                 if options.overwrite or not os.path.exists(track.igc_filename):
@@ -166,15 +135,15 @@ def main(argv):
         elif args[0] == 'id':
             if len(args) > 1:
                 raise UserError('extra arguments on command line %r' % args[1:])
-            sys.stdout.write(json.dumps(flight_recorder.to_json(), indent=4, sort_keys=True))
+            sys.stdout.write(json.dumps(flytec.to_json(), indent=4, sort_keys=True))
             sys.stdout.write('\n')
         elif args[0] == 'li' or args[0] == 'list':
             if len(args) > 1:
                 raise UserError('extra arguments on command line %r' % args[1:])
-            sys.stdout.write(json.dumps({'tracks': [track.to_json() for track in flight_recorder.tracks()]}, indent=4, sort_keys=True))
+            sys.stdout.write(json.dumps({'tracks': [track.to_json() for track in flytec.tracks()]}, indent=4, sort_keys=True))
             sys.stdout.write('\n')
         elif args[0] == 'ch' or args[0] == 'check':
-            flight_recorder.check()
+            flytec.check()
         else:
             raise UserError('invalid command %r' % args)
     except UserError, e:

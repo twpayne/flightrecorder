@@ -36,7 +36,7 @@ class Track(object):
             for line in self._igc:
                 yield line
 
-    def to_json(self):
+    def to_json(self, igc=False):
         json = {}
         for key, value in self.__dict__.items():
             if key.startswith('_'):
@@ -48,6 +48,8 @@ class Track(object):
                 hours, minutes = divmod(minutes, 60)
                 value = '%02d:%02d:%02d' % (hours, minutes, seconds)
             json[key] = value
+        if igc:
+            json['igc'] = list(self.igc)
         return json
 
 

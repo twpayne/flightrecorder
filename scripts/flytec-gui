@@ -99,6 +99,12 @@ class TracksTreeView(gtk.TreeView):
         finally:
             model.thaw_notify()
         self.columns_autosize()
+        i = model.get_iter_first()
+        while i is not None:
+            track = model.get_value(i, 0)
+            if not os.path.exists(track.igc_filename):
+                self.get_selection().select_iter(i)
+            i = model.iter_next(i)
 
     def iselected_tracks(self):
         model, pathlist = self.get_selection().get_selected_rows()

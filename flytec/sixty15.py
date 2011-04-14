@@ -129,13 +129,16 @@ class MockSixty15IO(object):
         if line == 'ACT_11_00\r\n':
             for key in sorted(PA_FORMAT.keys()):
                 self.lines.append('%6d; %6d\r\n' % (key, struct.calcsize(PA_FORMAT[key])))
-            self.lines.append('Done\r\n')
+            self.lines.append(' Done\r\n')
             return
         if line == 'ACT_20_00\r\n':
-            for track in self.tracks:
-                self.lines.append('%6d; %02d.%02d.%02d; %02d:%02d:%02d; %8d; %02d:%02d:%02d; %8d; %8d; %8d; %8.2f; %8.2f; %8.2f;%16s;%16s;%16s\r\n' % track[0])
-            self.lines.append('Done\r\n')
-            return
+            if self.tracks:
+                for track in self.tracks:
+                    self.lines.append('%6d; %02d.%02d.%02d; %02d:%02d:%02d; %8d; %02d:%02d:%02d; %8d; %8d; %8d; %8.2f; %8.2f; %8.2f;%16s;%16s;%16s\r\n' % track[0])
+                self.lines.append('Done\r\n')
+                return
+            else:
+                self.lines.append('No Data\r\n')
         if line == 'ACT_22_00\r\n':
             self.tracks = []
             self.lines.append('ACT_22_00 Done\r\n')
@@ -202,7 +205,7 @@ class Sixty15(object):
         self.write('ACT_%02X_00\r\n' % x)
         while True:
             line = self.readline()
-            if line == 'Done\r\n':
+            if re.match(r'\A\s*Done\s*\r\n\Z', line):
                 break
             index, size = map(int, re.split(r'\s*;\s*', line))
             if index not in table:
@@ -220,12 +223,14 @@ class Sixty15(object):
 
     def act20(self):
         self.write('ACT_20_00\r\n')
+        line = self.readline(0.5)
+        if re.match('\A\s*No\s+Data\s*\r\n\Z', line):
+            return []
         tracks = []
         def igc_lambda(self, index):
             return lambda: self.iact21(index)
         while True:
-            line = self.readline(0.5)
-            if line == 'Done\r\n':
+            if re.match('\A\s*Done\s*\r\n\Z', line):
                 break
             fields = re.split(r'\s*;\s*', line)
             index = int(fields[0])
@@ -247,6 +252,7 @@ class Sixty15(object):
                     glider_type=fields[12].strip(),
                     glider_id=fields[13].strip(),
                     _igc_lambda=igc_lambda(self, index)))
+            line = self.readline(0.5)
         return add_igc_filenames(tracks, self.manufacturer, self.serial_number)
 
     def iact21(self, index):

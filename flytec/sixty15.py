@@ -124,7 +124,7 @@ class MockSixty15IO(object):
         if line == 'ACT_10_00\r\n':
             for key in sorted(FA_FORMAT.keys()):
                 self.lines.append('%6d; %6d\r\n' % (key, struct.calcsize(FA_FORMAT[key])))
-            self.lines.append('Done\r\n')
+            self.lines.append(' Done\r\n')
             return
         if line == 'ACT_11_00\r\n':
             for key in sorted(PA_FORMAT.keys()):
@@ -135,7 +135,7 @@ class MockSixty15IO(object):
             if self.tracks:
                 for track in self.tracks:
                     self.lines.append('%6d; %02d.%02d.%02d; %02d:%02d:%02d; %8d; %02d:%02d:%02d; %8d; %8d; %8d; %8.2f; %8.2f; %8.2f;%16s;%16s;%16s\r\n' % track[0])
-                self.lines.append('Done\r\n')
+                self.lines.append(' Done\r\n')
                 return
             else:
                 self.lines.append('No Data\r\n')
@@ -205,7 +205,7 @@ class Sixty15(object):
         self.write('ACT_%02X_00\r\n' % x)
         while True:
             line = self.readline()
-            if re.match(r'\A\s*Done\s*\r\n\Z', line):
+            if line == ' Done\r\n':
                 break
             index, size = map(int, re.split(r'\s*;\s*', line))
             if index not in table:
@@ -230,7 +230,7 @@ class Sixty15(object):
         def igc_lambda(self, index):
             return lambda: self.iact21(index)
         while True:
-            if re.match('\A\s*Done\s*\r\n\Z', line):
+            if line == ' Done\r\n':
                 break
             fields = re.split(r'\s*;\s*', line)
             index = int(fields[0])

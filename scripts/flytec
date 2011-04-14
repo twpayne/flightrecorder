@@ -154,6 +154,9 @@ def main(argv):
             sys.stdout.write('\n')
         elif args[0] == 'ch' or args[0] == 'check':
             flytec.check()
+        elif args[0] == 'du' or args[0] == 'dump':
+            sys.stdout.write(json.dumps(flytec.dump(), indent=4, sort_keys=True))
+            sys.stdout.write('\n')
         else:
             raise UserError('invalid command %r' % args)
     except UserError, e:

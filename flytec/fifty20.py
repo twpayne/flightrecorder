@@ -281,3 +281,6 @@ class Fifty20:
     def check(self):
         # FIXME
         pass
+
+    def dump(self):
+        raise NotImplementedError # FIXME

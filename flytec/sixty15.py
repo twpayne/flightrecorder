@@ -302,6 +302,12 @@ class Sixty15(object):
         self.act10()
         self.act11()
 
+    def dump(self):
+        fa = dict((k, self.rfa(k)) for k in FA_FORMAT.keys())
+        pa = dict((k, self.rpa(k)) for k in PA_FORMAT.keys())
+        tracks = list(track.to_json(True) for track in self.tracks)
+        return dict(fa=fa, pa=pa, tracks=tracks)
+
     @property
     def manufacturer(self):
         if self._manufacturer is None:

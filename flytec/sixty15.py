@@ -303,6 +303,10 @@ class Sixty15(object):
         return self._manufacturer
 
     @property
+    def manufacturer_name(self):
+        return MANUFACTURER_NAME[self.manufacturer]
+
+    @property
     def model(self):
         if self._model is None:
             self._model = ['6015', 'IQ Basic'][self.manufacturer]

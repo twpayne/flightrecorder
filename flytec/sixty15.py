@@ -55,7 +55,7 @@ FA_WindWheelGain    = 0x1c; FA_FORMAT[FA_WindWheelGain]    = 'B'
 FA_PreThermalThr    = 0x22; FA_FORMAT[FA_PreThermalThr]    = 'h'
 
 PA_FORMAT = {}
-PA_DeviceNr         = 0x00; PA_FORMAT[PA_DeviceNr]         = 'H' # FIXME inconsistent specification
+PA_DeviceNr         = 0x00; PA_FORMAT[PA_DeviceNr]         = 'I'
 PA_DeviceTyp        = 0x01; PA_FORMAT[PA_DeviceTyp]        = 'B'
 PA_SoftVers         = 0x02; PA_FORMAT[PA_SoftVers]         = 'H'
 PA_KalibType        = 0x03; PA_FORMAT[PA_KalibType]        = 'B'

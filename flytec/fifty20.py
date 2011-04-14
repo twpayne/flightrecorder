@@ -283,4 +283,6 @@ class Fifty20:
         pass
 
     def dump(self):
-        raise NotImplementedError # FIXME
+        memory = self.pbrmemr(0, 256)
+        tracks = list(track.to_json(True) for track in self.tracks)
+        return dict(memory=memory, tracks=tracks)

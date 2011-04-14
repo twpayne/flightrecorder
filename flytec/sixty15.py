@@ -181,17 +181,15 @@ class Sixty15(object):
         self._tracks = None
 
     def readline(self, timeout=1):
-        line = ''
         while True:
             index = self.buffer.find('\r\n')
             if index == -1:
-                line += self.buffer
-                self.buffer = self.io.read(timeout)
-                logging.debug('read %r' % self.buffer)
-                if len(self.buffer) == 0:
+                data = self.io.read(timeout)
+                if len(data) == 0:
                     raise ReadError
+                self.buffer += data
             else:
-                line += self.buffer[:index + 2]
+                line = self.buffer[:index + 2]
                 self.buffer = self.buffer[index + 2:]
                 logging.info('readline %r' % line)
                 return line

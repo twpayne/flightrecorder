@@ -21,7 +21,7 @@ import logging
 import re
 import struct
 
-from .common import Track, add_igc_filenames, MANUFACTURER_NAME
+from .common import Track, add_igc_filenames
 from .errors import ProtocolError, ReadError, TimeoutError, WriteError
 from .utc import UTC
 
@@ -176,6 +176,7 @@ class Sixty15(object):
     def __init__(self, io):
         self.io = io
         self.buffer = ''
+        self._bd = None
         self._serial_number = None
         self._manufacturer = None
         self._model = None
@@ -273,6 +274,10 @@ class Sixty15(object):
         else:
             raise ProtocolError('unexpected response %r' % line)
 
+    def actbd(self):
+        self.write('ACT_BD_00\r\n')
+        return self.readline().strip()
+
     def rxa(self, x, parameter, format):
         self.write('R%cA_%02X\r\n' % (x, parameter))
         line = self.readline(0.2)
@@ -292,7 +297,7 @@ class Sixty15(object):
 
     def to_json(self):
         return {
-            'manufacturer': MANUFACTURER_NAME[self.manufacturer],
+            'manufacturer': self.manufacturer_name,
             'model': self.model,
             'pilot_name': self.pilot_name,
             'serial_number': self.serial_number,
@@ -316,13 +321,15 @@ class Sixty15(object):
 
     @property
     def manufacturer_name(self):
-        return MANUFACTURER_NAME[self.manufacturer]
+        if self._bd is None:
+            self._bd = self.actbd()
+        return self._bd.split()[0]
 
     @property
     def model(self):
-        if self._model is None:
-            self._model = ['6015', 'IQ Basic'][self.manufacturer]
-        return self._model
+        if self._bd is None:
+            self._bd = self.actbd()
+        return self._bd.split()[1]
 
     @property
     def serial_number(self):

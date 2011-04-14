@@ -51,7 +51,7 @@ def Flytec(device=None):
         for klass in Sixty15, Fifty20:
             try:
                 flytec = klass(io)
-                flytec.manufacturer
+                flytec.manufacturer_name
                 return flytec
             except TimeoutError:
                 pass

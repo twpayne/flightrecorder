@@ -19,7 +19,7 @@ import datetime
 import logging
 import re
 
-from .common import Track, add_igc_filenames, MANUFACTURER_NAME
+from .common import Track, add_igc_filenames
 from .errors import ProtocolError, ReadError, TimeoutError, WriteError
 import nmea
 from .utc import UTC
@@ -244,7 +244,7 @@ class Fifty20:
 
     @property
     def manufacturer_name(self):
-        return MANUFACTURER_NAME[self.manufacturer]
+        return ['Flytec', 'Brauniger'][self.manufacturer]
 
     @property
     def manufacturer(self):

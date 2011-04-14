@@ -269,7 +269,7 @@ class Sixty15(object):
 
     def rxa(self, x, parameter, format):
         self.write('R%cA_%02X\r\n' % (x, parameter))
-        line = self.readline(0.1)
+        line = self.readline(0.2)
         m = re.match(r'\AR%cA_%02X_((?:[0-9A-F]{2})*)\r\n\Z' % (x, parameter), line)
         if m:
             return struct.unpack(format, ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(1))))

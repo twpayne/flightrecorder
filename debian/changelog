@@ -1,4 +1,10 @@
-flytec-utils (20110411-1) unstable; urgency=low
+flytec-utils (20110414) maverick; urgency=low
+
+  * Version bump
+
+ -- Tom Payne <twpayne@gmail.com>  Thu, 14 Apr 2011 13:39:56 +0200
+
+flytec-utils (20110411) unstable; urgency=low
 
   * Initial release (Closes: #1)
 

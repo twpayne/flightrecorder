@@ -66,6 +66,17 @@ class RangeSet(object):
         return False
 
 
+def abbreviator(items):
+    result = {}
+    for item in items:
+        for key in (item[:i] for i in xrange(1, len(item))):
+            if key in result:
+                result[key] = None
+            else:
+                result[key] = item
+    return result
+
+
 def main(argv):
     basename = os.path.basename(argv[0])
     parser = OptionParser()
@@ -78,10 +89,16 @@ def main(argv):
     options, args = parser.parse_args(argv[1:])
     logging.basicConfig(level=logging.WARN - 10 * options.level)
     try:
+        if args:
+            command = abbreviator('download dump id list zip'.split()).get(args[0])
+            if command is None:
+                raise UserError('unknown or ambiguous command %r' % args[0])
+        else:
+            command = 'download'
         flytec = Flytec(options.device)
         if flytec is None:
             raise UserError('no flight recorder detected')
-        if len(args) == 0 or args[0] in ('do', 'download', 'zi', 'zip'):
+        if command in ('download', 'zip'):
             sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (basename, flytec.manufacturer_name, flytec.model, flytec.serial_number, flytec.pilot_name, flytec.io.filename))
             zf = zipfile.ZipFile(options.output, 'w') if args[0] in ('zi', 'zip') else None
             count = 0
@@ -143,19 +160,19 @@ def main(argv):
             if zf:
                 zf.close()
             sys.stdout.write('%s: %d tracklogs downloaded\n' % (basename, count))
-        elif args[0] in ('id',):
+        elif command == 'id':
             if len(args) > 1:
                 raise UserError('extra arguments on command line %r' % args[1:])
             sys.stdout.write(json.dumps(flytec.to_json(), indent=4, sort_keys=True))
             sys.stdout.write('\n')
-        elif args[0] in ('li', 'list'):
+        elif command == 'list':
             if len(args) > 1:
                 raise UserError('extra arguments on command line %r' % args[1:])
             sys.stdout.write(json.dumps({'tracks': [track.to_json() for track in flytec.tracks]}, indent=4, sort_keys=True))
             sys.stdout.write('\n')
-        elif args[0] in ('ch', 'check'):
+        elif command == 'check':
             flytec.check()
-        elif args[0] in ('du', 'dump'):
+        elif command == 'dump':
             sys.stdout.write(json.dumps(flytec.dump(), indent=4, sort_keys=True))
             sys.stdout.write('\n')
         else:

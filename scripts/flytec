@@ -91,6 +91,7 @@ def main(argv):
                     continue
                 if zf is None and os.path.exists(track.igc_filename) and not options.overwrite:
                     sys.stdout.write('%s: skipping %s\n' % (basename, track.igc_filename))
+                    continue
                 sys.stdout.write('%s: downloading %s    0%%  --:--' % (basename, track.igc_filename))
                 lines = []
                 here = track.datetime

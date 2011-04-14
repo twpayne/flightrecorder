@@ -87,7 +87,7 @@ class MockSixty15IO(object):
         self.pa = [None] * (PA_Speed_FLA + 1)
         self.pa[PA_DeviceNr] = [1234]
         self.pa[PA_DeviceTyp] = [0]
-        self.pa[PA_SoftVers] = [5678]
+        self.pa[PA_SoftVers] = [1302]
         self.tracks = []
         self.tracks.append((
             (0,  9, 11, 16, 12, 43,  3, 1,  0,  8, 53, -161, 978, 452, 3.49, -2.90, 1.38, 'not-set', 'not set', 'not set'), (
@@ -321,7 +321,8 @@ class Sixty15(object):
     @property
     def software_version(self):
         if self._software_version is None:
-            self._software_version = str(self.rpa(PA_SoftVers)[0])
+            value = self.rpa(PA_SoftVers)[0]
+            self._software_version = '%d.%d.%02d' % (value / 1000, (value / 100) % 10, value % 100)
         return self._software_version
 
     @property

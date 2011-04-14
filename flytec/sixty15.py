@@ -80,11 +80,11 @@ class MockSixty15IO(object):
     def __init__(self):
         self.filename = 'mock'
         self.lines = deque()
-        self.fa = [None] * (FA_PreThermalThr + 1)
+        self.fa = dict((k, None) for k in FA_FORMAT.keys())
         self.fa[FA_Owner] = ['%-16s' % 'Chrigel Maurer']
         self.fa[FA_AC_Type] = ['%-16s' % 'Advance Omega']
         self.fa[FA_AC_ID] = ['%-16s' % 1]
-        self.pa = [None] * (PA_Speed_FLA + 1)
+        self.pa = dict((k, None) for k in PA_FORMAT.keys())
         self.pa[PA_DeviceNr] = [1234]
         self.pa[PA_DeviceTyp] = [0]
         self.pa[PA_SoftVers] = [1302]

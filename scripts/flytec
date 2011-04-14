@@ -100,7 +100,7 @@ def main(argv):
             raise UserError('no flight recorder detected')
         if command in ('download', 'zip'):
             sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (basename, flytec.manufacturer_name, flytec.model, flytec.serial_number, flytec.pilot_name, flytec.io.filename))
-            zf = zipfile.ZipFile(options.output, 'w') if args[0] in ('zi', 'zip') else None
+            zf = zipfile.ZipFile(options.output, 'w') if command == 'zip' else None
             count = 0
             range_sets = list(RangeSet(arg) for arg in args[1:])
             for i, track in enumerate(flytec.tracks):

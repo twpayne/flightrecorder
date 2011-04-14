@@ -69,7 +69,7 @@ class RangeSet(object):
 def abbreviator(items):
     result = {}
     for item in items:
-        for key in (item[:i] for i in xrange(1, len(item))):
+        for key in (item[:i] for i in xrange(1, len(item) + 1)):
             if key in result:
                 result[key] = None
             else:

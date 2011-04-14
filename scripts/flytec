@@ -90,7 +90,7 @@ def main(argv):
     logging.basicConfig(level=logging.WARN - 10 * options.level)
     try:
         if args:
-            command = abbreviator('download dump id list zip'.split()).get(args[0])
+            command = abbreviator('check download dump id list zip'.split()).get(args[0])
             if command is None:
                 raise UserError('unknown or ambiguous command %r' % args[0])
         else:

@@ -309,7 +309,6 @@ class MainWindow(gtk.Window):
 #
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
     op = optparse.OptionParser()
     op.add_option('-d', '--device', dest='device', metavar='DEVICE')
     options, args = op.parse_args()

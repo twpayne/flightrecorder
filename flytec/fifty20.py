@@ -19,7 +19,7 @@ import datetime
 import logging
 import re
 
-from .common import Track, add_igc_filenames
+from .common import Track, Waypoint, add_igc_filenames
 from .errors import ProtocolError, ReadError, TimeoutError, WriteError
 import nmea
 from .utc import UTC
@@ -66,15 +66,6 @@ class SNP:
         self.software_version = software_version
 
 
-class Waypoint:
-
-    def __init__(self, lat, lon, short_name, long_name, alt):
-        self.lat = lat
-        self.lon = lon
-        self.short_name = short_name
-        self.long_name = long_name
-        self.alt = alt
-
 
 class Fifty20:
 
@@ -83,6 +74,7 @@ class Fifty20:
         self.buffer = ''
         self._snp = None
         self._tracks = None
+        self._waypoints = None
 
     def readline(self, timeout=1):
         if self.buffer == '':
@@ -220,10 +212,7 @@ class Fifty20:
             lon = int(m.group(4)) + float(m.group(5)) / 60
             if m.group(6) == 'W':
                 lon *= -1
-            short_name = m.group(7)
-            long_name = m.group(8)
-            alt = int(m.group(9))
-            yield Waypoint(lat, lon, short_name, long_name, alt)
+            yield Waypoint(lat=lat, lon=lon, id=m.group(7).rstrip(), name=m.group(8).rstrip(), alt=int(m.group(9)))
 
     def pbrwps(self):
         return list(self.ipbrwps())
@@ -277,6 +266,12 @@ class Fifty20:
         if self._tracks is None:
             self._tracks = self.pbrtl()
         return self._tracks
+
+    @property
+    def waypoints(self):
+        if self._waypoints is None:
+            self._waypoints = self.pbrwps()
+        return self._waypoints
 
     def check(self):
         # FIXME

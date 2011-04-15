@@ -160,6 +160,8 @@ def main(argv):
             if zf:
                 zf.close()
             sys.stdout.write('%s: %d tracklogs downloaded\n' % (basename, count))
+        elif command == 'dump':
+            json.dump(flytec.dump(), sys.stdout, indent=4, sort_keys=True)
         elif command == 'id':
             if len(args) > 1:
                 raise UserError('extra arguments on command line %r' % args[1:])
@@ -170,8 +172,6 @@ def main(argv):
                 raise UserError('extra arguments on command line %r' % args[1:])
             json.dump(dict(tracks=[track.to_json() for track in flytec.tracks]), sys.stdout, indent=4, sort_keys=True)
             sys.stdout.write('\n')
-        elif command == 'dump':
-            json.dump(flytec.dump(), sys.stdout, indent=4, sort_keys=True)
             sys.stdout.write('\n')
         elif command == 'waypoints':
             json.dump(dict(waypoints=[waypoint.to_json() for waypoint in flytec.waypoints]), sys.stdout, indent=4, sort_keys=True)

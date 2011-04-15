@@ -21,9 +21,10 @@ import logging
 import re
 import struct
 
-from .common import Track, Waypoint, add_igc_filenames
+from .common import Track, add_igc_filenames
 from .errors import ProtocolError, ReadError, TimeoutError, WriteError
 from .utc import UTC
+from .waypoint import Waypoint
 
 
 FA_FORMAT = {}

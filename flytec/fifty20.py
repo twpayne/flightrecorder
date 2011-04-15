@@ -19,10 +19,11 @@ import datetime
 import logging
 import re
 
-from .common import Track, Waypoint, add_igc_filenames
+from .common import Track, add_igc_filenames
 from .errors import ProtocolError, ReadError, TimeoutError, WriteError
 import nmea
 from .utc import UTC
+from .waypoint import Waypoint
 
 
 MANUFACTURER = {}

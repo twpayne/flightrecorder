@@ -21,7 +21,7 @@ import logging
 import re
 import struct
 
-from .common import Track, add_igc_filenames
+from .common import Track, Waypoint, add_igc_filenames
 from .errors import ProtocolError, ReadError, TimeoutError, WriteError
 from .utc import UTC
 
@@ -183,6 +183,7 @@ class Sixty15(object):
         self._software_version = None
         self._pilot_name = None
         self._tracks = None
+        self._waypoints = None
 
     def readline(self, timeout=1):
         while True:
@@ -274,6 +275,53 @@ class Sixty15(object):
         else:
             raise ProtocolError('unexpected response %r' % line)
 
+    def act30(self):
+        self.write('ACT_30_00\r\n')
+        line = self.readline(2)
+        if line != ' Done\r\n':
+            raise ProtocolError('unexpected response %r' % line)
+
+    def iact31(self):
+        self.write('ACT_31_00\r\n')
+        line = self.readline()
+        if line == 'No Data\r\n':
+            return
+        while True:
+            if line == ' Done\r\n':
+                break
+            m = re.match(r'\A(.*?);([NS])\s+(\d+)\'(\d+\.\d+);([EW])\s+(\d+)\'(\d+\.\d+);\s*(\d+);\s*(\d+)\r\n', line)
+            if m:
+                lat = int(m.group(3)) + float(m.group(4)) / 60.0
+                if m.group(2) == 'S':
+                    lat = -lat
+                lon = int(m.group(6)) + float(m.group(7)) / 60.0
+                if m.group(5) == 'W':
+                    lon = -lon
+                yield Waypoint(id=m.group(1).rstrip(), lat=lat, lon=lon, alt=int(m.group(8)), radius=int(m.group(9)))
+            else:
+                raise ProtocolError('unexpected response %r' % line)
+            line = self.readline()
+
+    def act31(self):
+        return list(self.iact31())
+
+    def act32(self, waypoint):
+        self.write('ACT_31_00\r\n')
+        lat_hemi = 'N' if lat > 0 else 'S'
+        lat_deg, lat_min = divmod(abs(waypoint.lat), 60)
+        lon_hemi = 'E' if lon > 0 else 'W'
+        lon_deg, lon_min = divmod(abs(waypoint.lon), 60)
+        self.write('%-16s;%s% %2d\'%6.3f;%s %3d\'%6.3f;%6d;%6d\n' % (waypoint.name, lat_hemi, lat_deg, lat_min, lon_hemi, lon_deg, lon_min, waypoint.alt, waypoint.radius))
+        line = self.readline()
+        if line == ' Done\r\n':
+            pass
+        elif line == 'full list\r\n':
+            raise RuntimeError # FIXME
+        elif line == 'Syntax Error\r\n':
+            raise ProtocolError('syntax error')
+        elif line == 'already exist\r\n':
+            raise RuntimeError # FIXME
+
     def actbd(self):
         self.write('ACT_BD_00\r\n')
         return self.readline().strip()
@@ -355,3 +403,9 @@ class Sixty15(object):
         if self._tracks is None:
             self._tracks = self.act20()
         return self._tracks
+
+    @property
+    def waypoints(self):
+        if self._waypoints is None:
+            self._waypoints = self.act31()
+        return self._waypoints

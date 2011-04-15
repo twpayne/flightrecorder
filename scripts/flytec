@@ -163,17 +163,17 @@ def main(argv):
         elif command == 'id':
             if len(args) > 1:
                 raise UserError('extra arguments on command line %r' % args[1:])
-            sys.stdout.write(json.dumps(flytec.to_json(), indent=4, sort_keys=True))
+            json.dump(flytec.to_json(), sys.stdout, indent=4, sort_keys=True)
             sys.stdout.write('\n')
         elif command == 'list':
             if len(args) > 1:
                 raise UserError('extra arguments on command line %r' % args[1:])
-            sys.stdout.write(json.dumps({'tracks': [track.to_json() for track in flytec.tracks]}, indent=4, sort_keys=True))
+            json.dump(dict(tracks=[track.to_json() for track in flytec.tracks]), sys.stdout, indent=4, sort_keys=True)
             sys.stdout.write('\n')
         elif command == 'check':
             flytec.check()
         elif command == 'dump':
-            sys.stdout.write(json.dumps(flytec.dump(), indent=4, sort_keys=True))
+            json.dump(flytec.dump(), sys.stdout, indent=4, sort_keys=True)
             sys.stdout.write('\n')
         elif command == 'waypoints':
             json.dump(dict(waypoints=[waypoint.to_json() for waypoint in flytec.waypoints]), sys.stdout, indent=4, sort_keys=True)

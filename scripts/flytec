@@ -175,8 +175,6 @@ def main(argv):
         elif command == 'dump':
             sys.stdout.write(json.dumps(flytec.dump(), indent=4, sort_keys=True))
             sys.stdout.write('\n')
-        else:
-            raise UserError('invalid command %r' % args)
     except UserError, e:
         sys.stdout.write('%s: %s\n' % (basename, e.message))
         return 1

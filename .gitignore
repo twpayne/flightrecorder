@@ -1,4 +1,5 @@
 *.IGC
+*.json
 *.zip
 /build
 /debian/files

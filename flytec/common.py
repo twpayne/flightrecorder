@@ -50,6 +50,16 @@ class Track(object):
         return json
 
 
+class Waypoint(object):
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    def to_json(self):
+        return self.__dict__.copy()
+
+
 def add_igc_filenames(tracks, manufacturer, serial_number):
     date, index = None, 0
     for track in reversed(tracks):

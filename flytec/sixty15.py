@@ -80,11 +80,11 @@ class MockSixty15IO(object):
     def __init__(self):
         self.filename = 'mock'
         self.lines = deque()
-        self.fa = dict((k, None) for k in FA_FORMAT.keys())
+        self.fa = dict((key, None) for key in FA_FORMAT.keys())
         self.fa[FA_Owner] = ['%-16s' % 'Chrigel Maurer']
         self.fa[FA_AC_Type] = ['%-16s' % 'Advance Omega']
         self.fa[FA_AC_ID] = ['%-16s' % 1]
-        self.pa = dict((k, None) for k in PA_FORMAT.keys())
+        self.pa = dict((key, None) for key in PA_FORMAT.keys())
         self.pa[PA_DeviceNr] = [1234]
         self.pa[PA_DeviceTyp] = [0]
         self.pa[PA_SoftVers] = [1302]
@@ -356,8 +356,8 @@ class Sixty15(object):
         self.act11()
 
     def dump(self):
-        fa = dict((k, self.rfa(k)) for k in FA_FORMAT.keys())
-        pa = dict((k, self.rpa(k)) for k in PA_FORMAT.keys())
+        fa = dict((key, self.rfa(key)) for key in FA_FORMAT.keys())
+        pa = dict((key, self.rpa(key)) for key in PA_FORMAT.keys())
         tracks = list(track.to_json(True) for track in self.tracks)
         waypoints = list(waypoint.to_json() for waypoint in self.waypoints)
         return dict(fa=fa, pa=pa, tracks=tracks, waypoints=waypoints)

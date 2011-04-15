@@ -176,7 +176,7 @@ def main(argv):
             sys.stdout.write(json.dumps(flytec.dump(), indent=4, sort_keys=True))
             sys.stdout.write('\n')
         elif command == 'waypoints':
-            json.dump(dict(waypoints=[w.to_json() for w in flytec.waypoints]), sys.stdout, indent=4, sort_keys=True)
+            json.dump(dict(waypoints=[waypoint.to_json() for waypoint in flytec.waypoints]), sys.stdout, indent=4, sort_keys=True)
             sys.stdout.write('\n')
     except UserError, e:
         sys.stdout.write('%s: %s\n' % (basename, e.message))

@@ -359,7 +359,8 @@ class Sixty15(object):
         fa = dict((k, self.rfa(k)) for k in FA_FORMAT.keys())
         pa = dict((k, self.rpa(k)) for k in PA_FORMAT.keys())
         tracks = list(track.to_json(True) for track in self.tracks)
-        return dict(fa=fa, pa=pa, tracks=tracks)
+        waypoints = list(waypoint.to_json() for waypoint in self.waypoints)
+        return dict(fa=fa, pa=pa, tracks=tracks, waypoints=waypoints)
 
     @property
     def manufacturer(self):

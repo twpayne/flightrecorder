@@ -280,4 +280,5 @@ class Fifty20:
     def dump(self):
         memory = self.pbrmemr(0, 256)
         tracks = list(track.to_json(True) for track in self.tracks)
-        return dict(memory=memory, tracks=tracks)
+        waypoints = list(waypoint.to_json() for waypoint in self.waypoints)
+        return dict(memory=memory, tracks=tracks, waypoints=waypoints)

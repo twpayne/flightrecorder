@@ -146,6 +146,9 @@ class MockSixty15IO(object):
         if m:
             self.lines.extend(self.tracks[int(m.group(1), 16)][1])
             return
+        if line == 'ACT_BD_00\r\n':
+            self.lines.append(['Flytec 6015\r\n', 'Brauniger IQ Basic\r\n'][self.pa[PA_DeviceTyp][0]])
+            return
         m = re.match(r'\ARFA_([0-9A-F]{2})\r\n\Z', line)
         if m:
             index = int(m.group(1), 16)

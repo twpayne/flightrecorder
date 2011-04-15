@@ -100,13 +100,13 @@ def main(argv):
             raise UserError('no flight recorder detected')
         if command in ('download', 'zip'):
             sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (basename, flytec.manufacturer_name, flytec.model, flytec.serial_number, flytec.pilot_name, flytec.io.filename))
-            zf = zipfile.ZipFile(options.output, 'w') if command == 'zip' else None
+            zipfile = zipfile.ZipFile(options.output, 'w') if command == 'zip' else None
             count = 0
             range_sets = list(RangeSet(arg) for arg in args[1:])
             for i, track in enumerate(flytec.tracks):
                 if range_sets and not any(i + 1 in rs for rs in range_sets):
                     continue
-                if zf is None and os.path.exists(track.igc_filename) and not options.overwrite:
+                if zipfile is None and os.path.exists(track.igc_filename) and not options.overwrite:
                     sys.stdout.write('%s: skipping %s\n' % (basename, track.igc_filename))
                     continue
                 sys.stdout.write('%s: downloading %s    0%%  --:--' % (basename, track.igc_filename))
@@ -143,11 +143,11 @@ def main(argv):
                         else:
                             sys.stdout.write('%02d:%02d' % divmod(remaining, 60))
                         sys.stdout.flush()
-                if zf:
-                    zi = zipfile.ZipInfo(track.igc_filename)
-                    zi.date_time = (track.datetime + track.duration).timetuple()[:6]
-                    zi.external_attr = 0644 << 16
-                    zf.writestr(zi, ''.join(track.igc))
+                if zipfile:
+                    zipinfo = zipfile.ZipInfo(track.igc_filename)
+                    zipinfo.date_time = (track.datetime + track.duration).timetuple()[:6]
+                    zipinfo.external_attr = 0644 << 16
+                    zipfile.writestr(zipinfo, ''.join(track.igc))
                 else:
                     output = NamedTemporaryFile(prefix='flytec', delete=False)
                     for line in lines:
@@ -157,8 +157,8 @@ def main(argv):
                 duration = time.time() - start
                 sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
                 count += 1
-            if zf:
-                zf.close()
+            if zipfile:
+                zipfile.close()
             sys.stdout.write('%s: %d tracklogs downloaded\n' % (basename, count))
         elif command == 'dump':
             json.dump(flytec.dump(), sys.stdout, indent=4, sort_keys=True)

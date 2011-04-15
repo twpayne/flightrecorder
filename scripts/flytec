@@ -170,8 +170,6 @@ def main(argv):
                 raise UserError('extra arguments on command line %r' % args[1:])
             json.dump(dict(tracks=[track.to_json() for track in flytec.tracks]), sys.stdout, indent=4, sort_keys=True)
             sys.stdout.write('\n')
-        elif command == 'check':
-            flytec.check()
         elif command == 'dump':
             json.dump(flytec.dump(), sys.stdout, indent=4, sort_keys=True)
             sys.stdout.write('\n')

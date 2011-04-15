@@ -351,10 +351,6 @@ class Sixty15(object):
             'serial_number': self.serial_number,
             'software_version': self.software_version}
 
-    def check(self):
-        self.act10()
-        self.act11()
-
     def dump(self):
         fa = dict((key, self.rfa(key)) for key in FA_FORMAT.keys())
         pa = dict((key, self.rpa(key)) for key in PA_FORMAT.keys())

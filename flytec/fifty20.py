@@ -273,10 +273,6 @@ class Fifty20:
             self._waypoints = self.pbrwps()
         return self._waypoints
 
-    def check(self):
-        # FIXME
-        pass
-
     def dump(self):
         memory = self.pbrmemr(0, 256)
         tracks = list(track.to_json(True) for track in self.tracks)

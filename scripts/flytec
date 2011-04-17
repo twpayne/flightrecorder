@@ -32,6 +32,7 @@ import zipfile
 
 from flytec import Flytec
 from flytec.utc import UTC
+import flytec.waypoint as waypoint
 
 
 class UserError(RuntimeError):
@@ -172,10 +173,8 @@ def main(argv):
                 raise UserError('extra arguments on command line %r' % args[1:])
             json.dump(dict(tracks=[track.to_json() for track in flytec.tracks]), sys.stdout, indent=4, sort_keys=True)
             sys.stdout.write('\n')
-            sys.stdout.write('\n')
         elif command == 'waypoints':
-            json.dump(dict(waypoints=[waypoint.to_json() for waypoint in flytec.waypoints]), sys.stdout, indent=4, sort_keys=True)
-            sys.stdout.write('\n')
+            waypoint.dump(flytec.waypoints, sys.stdout, format='oziexplorer')
     except UserError, e:
         sys.stdout.write('%s: %s\n' % (basename, e.message))
         return 1

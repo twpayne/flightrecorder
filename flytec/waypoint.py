@@ -71,13 +71,13 @@ def dump(waypoints, file, format='oziexplorer'):
         file.write(u'Reserved 2\r\n')
         file.write(u'Reserved 3\r\n')
         for i, waypoint in enumerate(waypoints):
-            color = int(waypoint.color[1:], 16)
-            file.write(u'%d,%s,%f,%f,,,1,,%d,,%s,,,%s,%f\r\n' % (
+            color = int(waypoint.color[1:], 16) if hasattr(waypoint, 'color') else None
+            file.write(u'%d,%s,%f,%f,,,1,,%s,,%s,,,%s,%f\r\n' % (
                     i + 1,
                     waypoint.id,
                     waypoint.lat,
                     waypoint.lon,
-                    ((color & 0xff) << 16) + (color & 0xff00) + (color >> 16),
+                    '%d' % (((color & 0xff) << 16) + (color & 0xff00) + (color >> 16)) if color is not None else '',
                     getattr(waypoint, 'description', ''),
                     '%f' % waypoint.radius if hasattr(waypoint, 'radius') else '',
                     waypoint.alt / 0.3048))

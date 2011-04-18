@@ -1,5 +1,4 @@
-Waypoint upload
-Waypoint format support
+Waypoint format handling
 Waypoint management using sequence emulation
 Strctured git-style command parser
 Route management

@@ -82,11 +82,11 @@ def main(argv):
     basename = os.path.basename(argv[0])
     parser = OptionParser()
     parser.add_option('-d', '--device', metavar='DEVICE', help='set device filename')
+    parser.add_option('-f', '--format', metavar='FORMAT', help='set output format')
     parser.add_option('-o', '--overwrite', action='store_true', help='re-download already downloaded tracklogs')
     parser.add_option('-v', '--verbose', action='count', dest='level', help='show debugging information')
-    parser.add_option('--output', metavar='FILENAME', help='set zip filename')
+    parser.add_option('--output', metavar='FILENAME', help='set output filename')
     parser.set_defaults(level=0)
-    parser.set_defaults(output='tracklogs.zip')
     options, args = parser.parse_args(argv[1:])
     logging.basicConfig(level=logging.WARN - 10 * options.level)
     try:
@@ -101,7 +101,7 @@ def main(argv):
             raise UserError('no flight recorder detected')
         if command in ('download', 'zip'):
             sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (basename, flytec.manufacturer_name, flytec.model, flytec.serial_number, flytec.pilot_name, flytec.io.filename))
-            zipfile = zipfile.ZipFile(options.output, 'w') if command == 'zip' else None
+            zipfile = zipfile.ZipFile(options.output or 'tracklogs.zip', 'w') if command == 'zip' else None
             count = 0
             range_sets = list(RangeSet(arg) for arg in args[1:])
             for i, track in enumerate(flytec.tracks):
@@ -174,7 +174,26 @@ def main(argv):
             json.dump(dict(tracks=[track.to_json() for track in flytec.tracks]), sys.stdout, indent=4, sort_keys=True)
             sys.stdout.write('\n')
         elif command == 'waypoints':
-            waypoint.dump(flytec.waypoints, sys.stdout, format='oziexplorer')
+            if len(args) == 1:
+                subcommand = 'download'
+            elif len(args) == 2:
+                subcommand = abbreviator('download'.split()).get(args[1])
+                if subcommand is None:
+                    raise UserError('unknown or ambiguous waypoints command %r' % args[1])
+            else:
+                raise UserError('extra arguments on command line %r' % args[2:])
+            if subcommand == 'download':
+                if options.output:
+                    output = open(options.output, 'w')
+                else:
+                    output = sys.stdout
+                if options.format:
+                    format = abbreviator('compegps formatgeo oziexplorer seeyou'.split()).get(options.format)
+                    if format is None:
+                        raise UserError('unknown waypoint format %r' % options.format)
+                else:
+                    format = 'oziexplorer'
+                waypoint.dump(flytec.waypoints, output, format=format)
     except UserError, e:
         sys.stdout.write('%s: %s\n' % (basename, e.message))
         return 1

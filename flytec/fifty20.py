@@ -290,6 +290,13 @@ class Fifty20:
         self._waypoints = None
         self.pbrwpx()
 
+    @waypoints.setter
+    def waypoints(self, value):
+        for waypoint in value:
+            self.pbrwpr(waypoint)
+            if self._waypoints is not None:
+                self._waypoints.append(waypoint)
+
     def dump(self):
         memory = self.pbrmemr(0, 256)
         tracks = list(track.to_json(True) for track in self.tracks)

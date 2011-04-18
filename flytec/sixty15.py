@@ -415,3 +415,10 @@ class Sixty15(object):
     def waypoints(self):
         self._waypoints = None
         self.act30()
+
+    @waypoints.setter
+    def waypoints(self, value):
+        for waypoint in value:
+            self.act32(waypoint)
+            if self._waypoints is not None:
+                self._waypoints.append(waypoint)

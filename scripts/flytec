@@ -83,6 +83,7 @@ def main(argv):
     parser = OptionParser()
     parser.add_option('-d', '--device', metavar='DEVICE', help='set device filename')
     parser.add_option('-f', '--format', metavar='FORMAT', help='set output format')
+    parser.add_option('-i', '--input', metavar='FILENAME', help='set input filename')
     parser.add_option('-o', '--output', metavar='FILENAME', help='set output filename')
     parser.add_option('--overwrite', action='store_true', help='re-download already downloaded tracklogs')
     parser.add_option('-v', '--verbose', action='count', dest='level', help='show debugging information')
@@ -177,7 +178,7 @@ def main(argv):
             if len(args) == 1:
                 subcommand = 'download'
             elif len(args) == 2:
-                subcommand = abbreviator('delete-all download'.split()).get(args[1])
+                subcommand = abbreviator('delete-all download upload'.split()).get(args[1])
                 if subcommand is None:
                     raise UserError('unknown or ambiguous waypoints command %r' % args[1])
             else:
@@ -196,6 +197,12 @@ def main(argv):
                 else:
                     format = 'oziexplorer'
                 waypoint.dump(flytec.waypoints, output, format=format)
+            elif subcommand == 'upload':
+                if options.input:
+                    input = open(options.input)
+                else:
+                    input = sys.stdin
+                flytec.waypoints = waypoint.load(input)
     except UserError, e:
         sys.stdout.write('%s: %s\n' % (basename, e.message))
         return 1

@@ -205,6 +205,17 @@ class Fifty20:
     def pbrtr(self, index):
         return list(self.ipbrtr(index))
 
+    def pbrwpr(self, waypoint):
+        self.none('PBRWPR,%02d%6.3f%s,%03d%6.3f,,%-16s,%04d' % (
+            abs(waypoint.lat) / 60,
+            abs(waypoint.lat) % 60,
+            'S' if waypoint.lat < 0 else 'N',
+            abs(waypoint.lon) / 60,
+            abs(waypoint.lon) % 60,
+            'W' if waypoint.lon < 0 else 'E',
+            waypoint.name[:16],
+            waypoint.alt))
+
     def ipbrwps(self):
         for m in self.ieach('PBRWPS,', PBRWPS_RE):
             lat = int(m.group(1)) + float(m.group(2)) / 60

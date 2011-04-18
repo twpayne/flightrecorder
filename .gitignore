@@ -1,5 +1,7 @@
+*.cup
 *.IGC
 *.json
+*.wpt
 *.zip
 /build
 /debian/files

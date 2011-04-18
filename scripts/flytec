@@ -177,12 +177,14 @@ def main(argv):
             if len(args) == 1:
                 subcommand = 'download'
             elif len(args) == 2:
-                subcommand = abbreviator('download'.split()).get(args[1])
+                subcommand = abbreviator('delete-all download'.split()).get(args[1])
                 if subcommand is None:
                     raise UserError('unknown or ambiguous waypoints command %r' % args[1])
             else:
                 raise UserError('extra arguments on command line %r' % args[2:])
-            if subcommand == 'download':
+            if subcommand == 'delete-all':
+                del flytec.waypoints
+            elif subcommand == 'download':
                 if options.output:
                     output = open(options.output, 'w')
                 else:

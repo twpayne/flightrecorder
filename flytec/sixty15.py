@@ -410,3 +410,8 @@ class Sixty15(object):
         if self._waypoints is None:
             self._waypoints = self.act31()
         return self._waypoints
+
+    @waypoints.deleter
+    def waypoints(self):
+        self._waypoints = None
+        self.act30()

@@ -274,6 +274,11 @@ class Fifty20:
             self._waypoints = self.pbrwps()
         return self._waypoints
 
+    @waypoints.deleter
+    def waypoints(self):
+        self._waypoints = None
+        self.pbrwpx()
+
     def dump(self):
         memory = self.pbrmemr(0, 256)
         tracks = list(track.to_json(True) for track in self.tracks)

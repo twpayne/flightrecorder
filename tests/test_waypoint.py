@@ -8,6 +8,7 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
+from flytec.waypoint import Waypoint
 import flytec.waypoint as waypoint
 
 
@@ -30,6 +31,17 @@ class TestWaypointSet(unittest.TestCase):
         self.assertFalse(hasattr(waypoint, 'description'))
         self.assertEqual(w.radius, 0.0)
 
+    def test_compegps_roundtrip(self):
+        w = Waypoint(lat=45.0, lon=5.0, alt=1000, id='B01100', description='B01')
+        s = StringIO()
+        waypoint.dump([w], s, format='compegps')
+        v = waypoint.load(StringIO(s.getvalue()))[0]
+        self.assertAlmostEqual(w.lat, v.lat)
+        self.assertAlmostEqual(w.lon, v.lon)
+        self.assertAlmostEqual(w.alt, v.alt)
+        self.assertEqual(w.id, v.id)
+        self.assertEqual(w.description, v.description)
+
     def test_formatgeo(self):
         lines = [
             '$FormatGEO',
@@ -45,6 +57,17 @@ class TestWaypointSet(unittest.TestCase):
         self.assertEqual(w.description, 'A01095')
         self.assertFalse(hasattr(waypoint, 'radius'))
 
+    def test_formatgeo_roundtrip(self):
+        w = Waypoint(lat=45.0, lon=5.0, alt=1000, id='B01100', description='B01')
+        s = StringIO()
+        waypoint.dump([w], s, format='formatgeo')
+        v = waypoint.load(StringIO(s.getvalue()))[0]
+        self.assertAlmostEqual(w.lat, v.lat)
+        self.assertAlmostEqual(w.lon, v.lon)
+        self.assertAlmostEqual(w.alt, v.alt)
+        self.assertEqual(w.id, v.id)
+        self.assertEqual(w.description, v.description)
+
     def test_seeyou(self):
         lines = [
             'Title,Code,Country,Latitude,Longitude,Elevation,Style,Direction,Length,Frequency,Description',
@@ -59,6 +82,17 @@ class TestWaypointSet(unittest.TestCase):
         self.assertFalse(hasattr(waypoint, 'color'))
         self.assertFalse(hasattr(waypoint, 'description'))
         self.assertFalse(hasattr(waypoint, 'radius'))
+
+    def test_seeyou_roundtrip(self):
+        w = Waypoint(lat=45.0, lon=5.0, alt=1000, id='B01100', description='B01')
+        s = StringIO()
+        waypoint.dump([w], s, format='seeyou')
+        v = waypoint.load(StringIO(s.getvalue()))[0]
+        self.assertAlmostEqual(w.lat, v.lat)
+        self.assertAlmostEqual(w.lon, v.lon)
+        self.assertAlmostEqual(w.alt, v.alt)
+        self.assertEqual(w.id, v.id)
+        self.assertEqual(w.description, v.description)
 
     def test_oziexplorer(self):
         lines = [
@@ -86,6 +120,17 @@ class TestWaypointSet(unittest.TestCase):
         self.assertEqual(w.color, '#0000ff')
         self.assertEqual(w.description, 'BALE TMA6  NO')
         self.assertFalse(hasattr(waypoint, 'radius'))
+
+    def test_oziexplorer_roundtrip(self):
+        w = Waypoint(lat=45.0, lon=5.0, alt=1000, id='B01100', description='B01')
+        s = StringIO()
+        waypoint.dump([w], s, format='oziexplorer')
+        v = waypoint.load(StringIO(s.getvalue()))[0]
+        self.assertAlmostEqual(w.lat, v.lat)
+        self.assertAlmostEqual(w.lon, v.lon)
+        self.assertAlmostEqual(w.alt, v.alt)
+        self.assertEqual(w.id, v.id)
+        self.assertEqual(w.description, v.description)
 
 
 if __name__ == '__main__':

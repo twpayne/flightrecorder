@@ -158,6 +158,22 @@ def load(fp, encoding='iso-8859-1'):
                 waypoints.append(waypoint)
                 continue
             logging.warning('unrecognized waypoint %r' % line)
+    elif len(lines) >= 1 and re.match(r'\A\$FormatUTM\s*\Z', lines[0]):
+        for line in lines[1:]:
+            m = re.match(r'\A(\S+)\s+(\d+)([A-Z])\s+(\d+)\s+(\d+)\s+(-?\d+)\s+(.*)\Z', line)
+            if m:
+                proj = Proj(proj='utm', zone=m.group(2), ellps='WGS84')
+                if m.group(3) < 'N':
+                    y -= 10000000
+                lon, lat = proj(int(m.group(4)), int(m.group(5)), inverse=True)
+                waypoint_properties = {}
+                for key, index in {'id': 1, 'description': 7}.items():
+                    if m.group(index):
+                        waypoint_properties[key] = m.group(index)
+                waypoint = Waypoint(lat=lat, lon=lon, alt=int(m.group(6)), **waypoint_properties)
+                waypoints.append(waypoint)
+                continue
+            logging.warning('unrecognized waypoint %r' % line)
     elif len(lines) > 1 and re.match(r'\Atitle,code,country,latitude,longitude,elevation,style,direction,length,frequency,description', lines[0], re.I):
         columns = re.split(r'\s*,\s*', lines[0].rstrip().lower())
         for line in lines[1:]:

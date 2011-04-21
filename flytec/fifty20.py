@@ -207,11 +207,11 @@ class Fifty20:
 
     def pbrwpr(self, waypoint):
         self.none('PBRWPR,%02d%6.3f%s,%03d%6.3f,,%-16s,%04d' % (
-            abs(waypoint.lat) / 60,
-            abs(waypoint.lat) % 60,
+            abs(60 * waypoint.lat) / 60,
+            abs(60 * waypoint.lat) % 60,
             'S' if waypoint.lat < 0 else 'N',
-            abs(waypoint.lon) / 60,
-            abs(waypoint.lon) % 60,
+            abs(60 * waypoint.lon) / 60,
+            abs(60 * waypoint.lon) % 60,
             'W' if waypoint.lon < 0 else 'E',
             waypoint.name[:16],
             waypoint.alt))

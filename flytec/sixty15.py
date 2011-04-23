@@ -315,7 +315,12 @@ class Sixty15(object):
         lat_deg, lat_min = divmod(abs(60 * waypoint.lat), 60)
         lon_hemi = 'E' if waypoint.lon > 0 else 'W'
         lon_deg, lon_min = divmod(abs(60 * waypoint.lon), 60)
-        self.write('%-16s;%s  %2d\'%6.3f;%s %3d\'%6.3f;%6d;%6d\r\n' % (waypoint.description or waypoint.id, lat_hemi, lat_deg, lat_min, lon_hemi, lon_deg, lon_min, waypoint.alt, waypoint.radius))
+        self.write('%-16s;%s  %2d\'%6.3f;%s %3d\'%6.3f;%6d;%6d\r\n' % (
+            (waypoint.name or waypoint.id)[:16],
+            lat_hemi, lat_deg, lat_min,
+            lon_hemi, lon_deg, lon_min,
+            waypoint.alt,
+            getattr(waypoint, 'radius', 400)))
         line = self.readline()
         if line == ' Done\r\n':
             pass

@@ -125,7 +125,7 @@ class Fifty20:
             self.io.flush()
             raise
 
-    def none(self, command, timeout):
+    def none(self, command, timeout=1):
         for m in self.ieach(command, None, timeout):
             raise ProtocolError(m)
 

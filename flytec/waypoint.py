@@ -46,7 +46,8 @@ def dump(waypoints, file, format='oziexplorer'):
                     'S' if waypoint.lat < 0 else 'N',
                     abs(waypoint.lon),
                     'W' if waypoint.lon < 0 else 'E',
-                    waypoint.alt, getattr(waypoint, 'description', '')))
+                    waypoint.alt,
+                    getattr(waypoint, 'name', '')))
             color = int(waypoint.color[1:], 16)
             file.write(u'w Waypoint,0,-1.0,16777215,%d,1,7,,%f,\r\n' % (
                     ((color & 0xff) << 16) + (color & 0xff00) + (color >> 16),
@@ -65,7 +66,7 @@ def dump(waypoints, file, format='oziexplorer'):
                     (60 * abs(waypoint.lon)) % 60,
                     (3600 * abs(waypoint.lon)) % 60,
                     waypoint.alt,
-                    getattr(waypoint, 'description', '')))
+                    getattr(waypoint, 'name', '')))
     elif format == 'oziexplorer':
         file.write(u'OziExplorer Waypoint File Version 1.0\r\n')
         file.write(u'WGS 84\r\n')
@@ -79,14 +80,14 @@ def dump(waypoints, file, format='oziexplorer'):
                     waypoint.lat,
                     waypoint.lon,
                     '%d' % (((color & 0xff) << 16) + (color & 0xff00) + (color >> 16)) if color is not None else '',
-                    getattr(waypoint, 'description', ''),
+                    getattr(waypoint, 'name', ''),
                     '%f' % waypoint.radius if hasattr(waypoint, 'radius') else '',
                     waypoint.alt / 0.3048))
     elif format == 'seeyou':
         file.write(u'title,code,country,latitude,longitude,elevation,style,direction,length,frequency,description\r\n')
         for waypoint in waypoints:
             file.write(u'"%s","%s",,%02d%06.3f%s,%03d%06.3f%s,%fm,,,,,"%s"\r\n' % (
-                    waypoint.id,
+                    waypoint.name,
                     waypoint.id,
                     abs(waypoint.lat),
                     (60 * abs(waypoint.lat)) % 60,
@@ -112,7 +113,7 @@ def load(fp, encoding='iso-8859-1'):
                 if m.group(5) == 'W':
                     lon = -lon
                 waypoint_properties = {}
-                for key, index in {'id': 1, 'description': 7}.items():
+                for key, index in {'id': 1, 'name': 7}.items():
                     if m.group(index):
                         waypoint_properties[key] = m.group(index)
                 waypoint = Waypoint(lat=lat, lon=lon, alt=float(m.group(6)), **waypoint_properties)
@@ -125,7 +126,7 @@ def load(fp, encoding='iso-8859-1'):
                     y -= 10000000
                 lon, lat = proj(int(m.group(4)), int(m.group(5)), inverse=True)
                 waypoint_properties = {}
-                for key, index in {'id': 1, 'description': 7}.items():
+                for key, index in {'id': 1, 'name': 7}.items():
                     if m.group(index):
                         waypoint_properties[key] = m.group(index)
                 waypoint = Waypoint(lat=lat, lon=lon, alt=float(m.group(6)), **waypoint_properties)
@@ -151,7 +152,7 @@ def load(fp, encoding='iso-8859-1'):
                 if m.group(6) == 'W':
                     lon = -lon
                 waypoint_properties = {}
-                for key, index in {'id': 1, 'description': 11}.items():
+                for key, index in {'id': 1, 'name': 11}.items():
                     if m.group(index):
                         waypoint_properties[key] = m.group(index)
                 waypoint = Waypoint(lat=lat, lon=lon, alt=int(m.group(10)), **waypoint_properties)
@@ -167,7 +168,7 @@ def load(fp, encoding='iso-8859-1'):
                     y -= 10000000
                 lon, lat = proj(int(m.group(4)), int(m.group(5)), inverse=True)
                 waypoint_properties = {}
-                for key, index in {'id': 1, 'description': 7}.items():
+                for key, index in {'id': 1, 'name': 7}.items():
                     if m.group(index):
                         waypoint_properties[key] = m.group(index)
                 waypoint = Waypoint(lat=lat, lon=lon, alt=int(m.group(6)), **waypoint_properties)
@@ -198,7 +199,7 @@ def load(fp, encoding='iso-8859-1'):
                 if m.group(2) == 'ft':
                     alt *= 0.3048
                 waypoint_properties = {}
-                for key, value in {'id': 'code', 'description': 'description'}.items():
+                for key, value in {'description': 'description', 'id': 'code', 'name': 'title'}.items():
                     if fields[value]:
                         m = re.match(r'\A"(.*)"\Z', fields[value])
                         waypoint_properties[key] = m.group(1) if m else fields[value]
@@ -210,7 +211,7 @@ def load(fp, encoding='iso-8859-1'):
         for line in lines[4:]:
             fields = re.split(r'\s*,\s*', line)
             alt = 0.3048 * float(fields[14]) if fields[14] != '-777' else None
-            waypoint_properties = {'id': fields[1], 'description': re.sub(r'\xd1', ',', fields[10])}
+            waypoint_properties = {'id': fields[1], 'name': re.sub(r'\xd1', ',', fields[10])}
             if fields[9]:
                 color = int(fields[9])
                 waypoint_properties['color'] = '#%02x%02x%02x' % (color & 0xff, (color >> 8) & 0xff, (color >> 16) & 0xff)

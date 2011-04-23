@@ -43,7 +43,7 @@ PBRTL_RE = re.compile(r'\APBRTL,(\d+),(\d+),(\d+).(\d+).(\d+),(\d+):(\d+):(\d+),
 PBRWPS_RE = re.compile(r'\APBRWPS,(\d{2})(\d{2}\.\d{3}),([NS]),(\d{3})(\d{2}\.\d{3}),([EW]),([^,]*),([^,]*),(\d+)\Z')
 
 
-class Route:
+class Route(object):
 
     def __init__(self, index, name, routepoints):
         self.index = index
@@ -51,14 +51,14 @@ class Route:
         self.routepoints = routepoints
 
 
-class Routepoint:
+class Routepoint(object):
 
     def __init__(self, short_name, long_name):
         self.short_name = short_name
         self.long_name = long_name
 
 
-class SNP:
+class SNP(object):
 
     def __init__(self, model, pilot_name, serial_number, software_version):
         self.model = model
@@ -68,7 +68,7 @@ class SNP:
 
 
 
-class Fifty20:
+class Fifty20(object):
 
     def __init__(self, io):
         self.io = io

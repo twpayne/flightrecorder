@@ -233,7 +233,7 @@ class Fifty20(object):
         if name:
             self.none('PBRWPX,%-17s' % name)
         else:
-            self.none('PBRWPX,')
+            self.none('PBRWPX,,', 0)
 
     def to_json(self):
         return {

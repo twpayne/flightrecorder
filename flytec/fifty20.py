@@ -67,7 +67,6 @@ class SNP(object):
         self.software_version = software_version
 
 
-
 class Fifty20(object):
 
     def __init__(self, io):
@@ -279,23 +278,15 @@ class Fifty20(object):
             self._tracks = self.pbrtl()
         return self._tracks
 
-    @property
     def waypoints(self):
-        if self._waypoints is None:
-            self._waypoints = self.pbrwps()
-        return self._waypoints
+        return self.ipbrwps()
 
-    @waypoints.deleter
-    def waypoints(self):
-        self._waypoints = None
+    def waypoints_delete_all(self):
         self.pbrwpx()
 
-    @waypoints.setter
-    def waypoints(self, value):
-        for waypoint in value:
+    def waypoints_upload(self, waypoints):
+        for waypoint in waypoints:
             self.pbrwpr(waypoint)
-            if self._waypoints is not None:
-                self._waypoints.append(waypoint)
 
     def dump(self):
         memory = self.pbrmemr(0, 256)

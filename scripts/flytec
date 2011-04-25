@@ -184,7 +184,7 @@ def main(argv):
             else:
                 raise UserError('extra arguments on command line %r' % args[2:])
             if subcommand == 'delete-all':
-                del flytec.waypoints
+                flytec.waypoints_delete_all()
             elif subcommand == 'download':
                 if options.output:
                     output = open(options.output, 'w')
@@ -196,13 +196,13 @@ def main(argv):
                         raise UserError('unknown waypoint format %r' % options.format)
                 else:
                     format = 'oziexplorer'
-                waypoint.dump(flytec.waypoints, output, format=format)
+                waypoint.dump(flytec.waypoints(), output, format=format)
             elif subcommand == 'upload':
                 if options.input:
                     input = open(options.input)
                 else:
                     input = sys.stdin
-                flytec.waypoints = waypoint.load(input)
+                flytec.waypoints_upload(waypoint.load(input))
     except UserError, e:
         sys.stdout.write('%s: %s\n' % (basename, e.message))
         return 1

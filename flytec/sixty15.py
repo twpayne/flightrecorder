@@ -410,20 +410,12 @@ class Sixty15(object):
             self._tracks = self.act20()
         return self._tracks
 
-    @property
     def waypoints(self):
-        if self._waypoints is None:
-            self._waypoints = self.act31()
-        return self._waypoints
+        return self.iact31()
 
-    @waypoints.deleter
-    def waypoints(self):
-        self._waypoints = None
+    def waypoints_delete_all(self):
         self.act30()
 
-    @waypoints.setter
-    def waypoints(self, value):
-        for waypoint in value:
+    def waypoints_upload(self, waypoints):
+        for waypoint in waypoints:
             self.act32(waypoint)
-            if self._waypoints is not None:
-                self._waypoints.append(waypoint)

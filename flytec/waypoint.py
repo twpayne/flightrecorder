@@ -101,6 +101,7 @@ def dump(waypoints, file, format='oziexplorer'):
 
 def load(fp, encoding='iso-8859-1'):
     lines = list(line.rstrip() for line in fp.read().decode(encoding).splitlines())
+    projs = {}
     waypoints = []
     if len(lines) >= 2 and re.match(r'\AG\s+WGS\s+84\s*\Z', lines[0]) and re.match(r'\AU\s+1\s*\Z', lines[1]):
         for line in lines[2:]:
@@ -121,10 +122,13 @@ def load(fp, encoding='iso-8859-1'):
                 continue
             m = re.match(r'\AW\s+(\S+)\s+(\d+)([CDEFGHJKLMNPQRSTUVWX])\s+(\d+)\s+(\d+)\s+\d{2}-(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)-\d{2}\s+\d{2}:\d{2}:\d{2}\s+(-?\d+(?:\.\d+))(?:\s+(.*))?\Z', line)
             if m:
-                proj = Proj(proj='utm', zone=m.group(2), ellps='WGS84')
+                zone = m.group(2)
+                if zone not in projs:
+                    projs[zone] = Proj(proj='utm', zone=zone, ellps='WGS84')
+                x, y = int(m.group(4)), int(m.group(5))
                 if m.group(3) < 'N':
                     y -= 10000000
-                lon, lat = proj(int(m.group(4)), int(m.group(5)), inverse=True)
+                lon, lat = projs[zone](x, y, inverse=True)
                 waypoint_properties = {}
                 for key, index in {'id': 1, 'name': 7}.items():
                     if m.group(index):
@@ -163,10 +167,13 @@ def load(fp, encoding='iso-8859-1'):
         for line in lines[1:]:
             m = re.match(r'\A(\S+)\s+(\d+)([A-Z])\s+(\d+)\s+(\d+)\s+(-?\d+)\s+(.*)\Z', line)
             if m:
-                proj = Proj(proj='utm', zone=m.group(2), ellps='WGS84')
+                zone = m.group(2)
+                if zone not in projs:
+                    projs[zone] = Proj(proj='utm', zone=zone, ellps='WGS84')
+                x, y = int(m.group(4)), int(m.group(5))
                 if m.group(3) < 'N':
                     y -= 10000000
-                lon, lat = proj(int(m.group(4)), int(m.group(5)), inverse=True)
+                lon, lat = projs[zone](x, y, inverse=True)
                 waypoint_properties = {}
                 for key, index in {'id': 1, 'name': 7}.items():
                     if m.group(index):

@@ -46,7 +46,7 @@ def dump(waypoints, file, format='oziexplorer'):
                     'S' if waypoint.lat < 0 else 'N',
                     abs(waypoint.lon),
                     'W' if waypoint.lon < 0 else 'E',
-                    waypoint.alt,
+                    waypoint.alt or 0,
                     getattr(waypoint, 'name', '')))
             color = int(waypoint.color[1:], 16)
             file.write(u'w Waypoint,0,-1.0,16777215,%d,1,7,,%f,\r\n' % (
@@ -65,7 +65,7 @@ def dump(waypoints, file, format='oziexplorer'):
                     abs(waypoint.lon),
                     (60 * abs(waypoint.lon)) % 60,
                     (3600 * abs(waypoint.lon)) % 60,
-                    waypoint.alt,
+                    waypoint.alt or 0,
                     getattr(waypoint, 'name', '')))
     elif format == 'oziexplorer':
         file.write(u'OziExplorer Waypoint File Version 1.0\r\n')
@@ -74,7 +74,7 @@ def dump(waypoints, file, format='oziexplorer'):
         file.write(u'Reserved 3\r\n')
         for i, waypoint in enumerate(waypoints):
             color = int(waypoint.color[1:], 16) if hasattr(waypoint, 'color') else None
-            file.write(u'%d,%s,%f,%f,,,1,,%s,,%s,,,%s,%f\r\n' % (
+            file.write(u'%d,%s,%f,%f,,,1,,%s,,%s,,,%s,%s\r\n' % (
                     i + 1,
                     waypoint.id,
                     waypoint.lat,
@@ -82,11 +82,11 @@ def dump(waypoints, file, format='oziexplorer'):
                     '%d' % (((color & 0xff) << 16) + (color & 0xff00) + (color >> 16)) if color is not None else '',
                     getattr(waypoint, 'name', ''),
                     '%f' % waypoint.radius if hasattr(waypoint, 'radius') else '',
-                    waypoint.alt / 0.3048))
+                    '-777' if waypoint.alt is None else '%f' % (waypoint.alt / 0.3048)))
     elif format == 'seeyou':
         file.write(u'title,code,country,latitude,longitude,elevation,style,direction,length,frequency,description\r\n')
         for waypoint in waypoints:
-            file.write(u'"%s","%s",,%02d%06.3f%s,%03d%06.3f%s,%fm,,,,,"%s"\r\n' % (
+            file.write(u'"%s","%s",,%02d%06.3f%s,%03d%06.3f%s,%s,,,,,"%s"\r\n' % (
                     waypoint.name,
                     waypoint.id,
                     abs(waypoint.lat),
@@ -95,7 +95,7 @@ def dump(waypoints, file, format='oziexplorer'):
                     abs(waypoint.lon),
                     (60 * abs(waypoint.lon)) % 60,
                     'W' if waypoint.lon < 0 else 'E',
-                    waypoint.alt,
+                    '' if waypoint.alt is None else '%fm' % waypoint.alt,
                     getattr(waypoint, 'description', '')))
 
 

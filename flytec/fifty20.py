@@ -243,6 +243,10 @@ class Fifty20(object):
             'software_version': self.software_version}
 
     @property
+    def extended_commands(self):
+        return self.snp.model in set(('6020', '6030', 'COMPETINO+', 'COMPEO+'))
+
+    @property
     def manufacturer_name(self):
         return ['Flytec', 'Brauniger'][self.manufacturer]
 

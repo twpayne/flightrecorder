@@ -151,11 +151,9 @@ def main(argv):
                     zipinfo.external_attr = 0644 << 16
                     zipfile.writestr(zipinfo, ''.join(track.igc))
                 else:
-                    output = NamedTemporaryFile(prefix='flytec', delete=False)
-                    for line in lines:
-                        output.write(line)
-                    output.close()
-                    os.rename(output.name, track.igc_filename)
+                    with open(track.igc_filename, 'w') as output:
+                        for line in lines:
+                            output.write(line)
                 duration = time.time() - start
                 sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
                 count += 1

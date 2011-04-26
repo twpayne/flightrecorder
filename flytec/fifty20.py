@@ -27,9 +27,9 @@ from .waypoint import Waypoint
 
 
 MANUFACTURER = {}
-for model in '5020 5030 6020 6030'.split(' '):
+for model in '5020 5030 6020 6030'.split():
     MANUFACTURER[model] = 0
-for model in 'COMPEO COMPEO+ COMPETINO COMPETINO+ GALILEO'.split(' '):
+for model in 'COMPEO COMPEO+ COMPETINO COMPETINO+ GALILEO'.split():
     MANUFACTURER[model] = 1
 
 XON = '\021'

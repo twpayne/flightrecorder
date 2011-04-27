@@ -78,131 +78,170 @@ def abbreviator(items):
     return result
 
 
+def flytec_dump(options, args):
+    if args:
+        raise UserError('extra arguments on command line %r' % args)
+    json.dump(Flytec(options.device).dump(), sys.stdout, indent=4, sort_keys=True)
+    sys.stdout.write('\n')
+
+
+def flytec_id(options, args):
+    if args:
+        raise UserError('extra arguments on command line %r' % args)
+    json.dump(Flytec(options.device).to_json(), sys.stdout, indent=4, sort_keys=True)
+    sys.stdout.write('\n')
+
+
+def flytec_tracks_download_helper(options, args, zf):
+    flytec = Flytec(options.device)
+    sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (options.basename, flytec.manufacturer_name, flytec.model, flytec.serial_number, flytec.pilot_name, flytec.io.filename))
+    count = 0
+    range_sets = list(RangeSet(arg) for arg in args)
+    for i, track in enumerate(flytec.tracks()):
+        if range_sets and not any(i + 1 in rs for rs in range_sets):
+            continue
+        if zf is None and os.path.exists(track.igc_filename) and not options.overwrite:
+            sys.stdout.write('%s: skipping %s\n' % (options.basename, track.igc_filename))
+            continue
+        sys.stdout.write('%s: downloading %s    0%%  --:--' % (options.basename, track.igc_filename))
+        here = track.datetime
+        percentage, remaining = 0, None
+        start = time.time()
+        for line in track.igc:
+            m = re.match(r'\AB(\d\d)(\d\d)(\d\d)', line)
+            if m:
+                hour, minute, second = (int(g) for g in m.groups())
+                here = here.replace(hour=hour, minute=minute, second=second)
+            m = re.match(r'\AHFDTE(\d\d)(\d\d)(\d\d)', line)
+            if m:
+                day, month, year = (int(g) for g in m.groups())
+                here = datetime.datetime(2000 + year, month, day, 0, 0, 0, tzinfo=UTC())
+            prev_percentage = percentage
+            percentage = int(100 * (here - track.datetime).seconds / track.duration.seconds)
+            percentage = max(min(percentage, 100), 0)
+            prev_remaining = remaining
+            now = time.time()
+            if here == track.datetime or now - start < 2:
+                remaining = None
+            else:
+                remaining = (now - start) * max((track.datetime + track.duration - here).seconds, 0) / (here - track.datetime).seconds
+                remaining = max(remaining, 0)
+                if prev_remaining is not None:
+                    remaining = min(remaining, prev_remaining)
+            if percentage != prev_percentage or remaining != prev_remaining:
+                sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b%3d%%  ' % percentage)
+                if remaining is None:
+                    sys.stdout.write('--:--')
+                else:
+                    sys.stdout.write('%02d:%02d' % divmod(remaining, 60))
+                sys.stdout.flush()
+        duration = time.time() - start
+        sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
+        count += 1
+        yield track
+    sys.stdout.write('%s: %d tracklogs downloaded\n' % (options.basename, count))
+
+
+def flytec_tracks_download(options, args):
+    for track in flytec_tracks_download_helper(options, args, None):
+        with open(track.igc_filename, 'w') as output:
+            for line in track.igc:
+                output.write(line)
+
+
+def flytec_tracks_list(options, args):
+    json.dump(dict(tracks=[track.to_json() for track in Flytec(options.device).tracks()]), sys.stdout, indent=4, sort_keys=True)
+    sys.stdout.write('\n')
+
+
+def flytec_tracks_zip(options, args):
+    filename = 'tracks.zip'
+    if args and re.search(r'\.zip\Z', args[0], re.I):
+        filename, args = args[0], args[1:]
+    zf = zipfile.ZipFile(filename, 'w')
+    for track in flytec_tracks_download_helper(options, args, zf):
+        zi = zipfile.ZipInfo(track.igc_filename)
+        zi.date_time = (track.datetime + track.duration).timetuple()[:6]
+        zi.external_attr = 0644 << 16
+        zf.writestr(zi, ''.join(track.igc))
+    zf.close()
+
+
+def flytec_waypoints_delete_all(options, args):
+    if args:
+        raise UserError('extra arguments on command line %r' % args)
+    Flytec(options.device).waypoints_delete_all()
+
+
+def flytec_waypoints_download(options, args):
+    if not args:
+        output = sys.stdout
+    elif len(args) == 1:
+        output = open(args[0], 'w')
+    else:
+        raise UserError('extra arguments on command line: %r' % args[1:])
+    if options.format:
+        format = abbreviator('compegps formatgeo oziexplorer seeyou'.split()).get(options.format)
+        if format is None:
+            raise UserError('unknown waypoint format %r' % options.format)
+    else:
+        format = 'oziexplorer'
+    waypoint.dump(Flytec(options.device).waypoints(), output, format=format)
+
+
+def flytec_waypoints_upload(options, args):
+    if not args:
+        input = sys.stdin
+    elif len(args) == 1:
+        input = open(args[0])
+    else:
+        raise UserError('extra arguments on command line: %r' % args[1:])
+    Flytec(options.device).waypoints_upload(waypoint.load(input))
+
+
+def execute(options, args, commands):
+    for i, arg in enumerate(args):
+        abbr = abbreviator(key for key in commands.keys() if key is not None)
+        if arg in abbr:
+            command = abbr[arg]
+            if command is None:
+                raise UserError('ambiguous command \'%s\'' % ' '.join(args[:i + 1]))
+            elif callable(commands[command]):
+                return commands[command](options, args[i + 1:])
+            else:
+                commands = commands[command]
+        else:
+            return commands[None](options, args[i:])
+    return commands[None](options, [])
+
+
 def main(argv):
-    basename = os.path.basename(argv[0])
     parser = OptionParser()
     parser.add_option('-d', '--device', metavar='DEVICE', help='set device filename')
     parser.add_option('-f', '--format', metavar='FORMAT', help='set output format')
-    parser.add_option('-i', '--input', metavar='FILENAME', help='set input filename')
-    parser.add_option('-o', '--output', metavar='FILENAME', help='set output filename')
-    parser.add_option('--overwrite', action='store_true', help='re-download already downloaded tracklogs')
+    parser.add_option('-o', '--overwrite', action='store_true', help='re-download already downloaded tracklogs')
     parser.add_option('-v', '--verbose', action='count', dest='level', help='show debugging information')
     parser.set_defaults(level=0)
     options, args = parser.parse_args(argv[1:])
+    options.basename = os.path.basename(argv[0])
     logging.basicConfig(level=logging.WARN - 10 * options.level)
     try:
-        if args:
-            command = abbreviator('check dump id list tracks waypoints zip'.split()).get(args[0])
-            if command is None:
-                raise UserError('unknown or ambiguous command %r' % args[0])
-        else:
-            command = 'tracks'
-        flytec = Flytec(options.device)
-        if flytec is None:
-            raise UserError('no flight recorder detected')
-        if command in ('tracks', 'zip'):
-            sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (basename, flytec.manufacturer_name, flytec.model, flytec.serial_number, flytec.pilot_name, flytec.io.filename))
-            zipfile = zipfile.ZipFile(options.output or 'tracklogs.zip', 'w') if command == 'zip' else None
-            count = 0
-            range_sets = list(RangeSet(arg) for arg in args[1:])
-            for i, track in enumerate(flytec.tracks):
-                if range_sets and not any(i + 1 in rs for rs in range_sets):
-                    continue
-                if zipfile is None and os.path.exists(track.igc_filename) and not options.overwrite:
-                    sys.stdout.write('%s: skipping %s\n' % (basename, track.igc_filename))
-                    continue
-                sys.stdout.write('%s: downloading %s    0%%  --:--' % (basename, track.igc_filename))
-                lines = []
-                here = track.datetime
-                percentage, remaining = 0, None
-                start = time.time()
-                for line in track.igc:
-                    lines.append(line)
-                    m = re.match(r'\AB(\d\d)(\d\d)(\d\d)', line)
-                    if m:
-                        hour, minute, second = (int(g) for g in m.groups())
-                        here = here.replace(hour=hour, minute=minute, second=second)
-                    m = re.match(r'\AHFDTE(\d\d)(\d\d)(\d\d)', line)
-                    if m:
-                        day, month, year = (int(g) for g in m.groups())
-                        here = datetime.datetime(2000 + year, month, day, 0, 0, 0, tzinfo=UTC())
-                    prev_percentage = percentage
-                    percentage = int(100 * (here - track.datetime).seconds / track.duration.seconds)
-                    percentage = max(min(percentage, 100), 0)
-                    prev_remaining = remaining
-                    now = time.time()
-                    if here == track.datetime or now - start < 2:
-                        remaining = None
-                    else:
-                        remaining = (now - start) * max((track.datetime + track.duration - here).seconds, 0) / (here - track.datetime).seconds
-                        remaining = max(remaining, 0)
-                        if prev_remaining is not None:
-                            remaining = min(remaining, prev_remaining)
-                    if percentage != prev_percentage or remaining != prev_remaining:
-                        sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b%3d%%  ' % percentage)
-                        if remaining is None:
-                            sys.stdout.write('--:--')
-                        else:
-                            sys.stdout.write('%02d:%02d' % divmod(remaining, 60))
-                        sys.stdout.flush()
-                if zipfile:
-                    zipinfo = zipfile.ZipInfo(track.igc_filename)
-                    zipinfo.date_time = (track.datetime + track.duration).timetuple()[:6]
-                    zipinfo.external_attr = 0644 << 16
-                    zipfile.writestr(zipinfo, ''.join(track.igc))
-                else:
-                    with open(track.igc_filename, 'w') as output:
-                        for line in lines:
-                            output.write(line)
-                duration = time.time() - start
-                sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
-                count += 1
-            if zipfile:
-                zipfile.close()
-            sys.stdout.write('%s: %d tracklogs downloaded\n' % (basename, count))
-        elif command == 'dump':
-            json.dump(flytec.dump(), sys.stdout, indent=4, sort_keys=True)
-        elif command == 'id':
-            if len(args) > 1:
-                raise UserError('extra arguments on command line %r' % args[1:])
-            json.dump(flytec.to_json(), sys.stdout, indent=4, sort_keys=True)
-            sys.stdout.write('\n')
-        elif command == 'list':
-            if len(args) > 1:
-                raise UserError('extra arguments on command line %r' % args[1:])
-            json.dump(dict(tracks=[track.to_json() for track in flytec.tracks]), sys.stdout, indent=4, sort_keys=True)
-            sys.stdout.write('\n')
-        elif command == 'waypoints':
-            if len(args) == 1:
-                subcommand = 'download'
-            elif len(args) == 2:
-                subcommand = abbreviator('delete-all download upload'.split()).get(args[1])
-                if subcommand is None:
-                    raise UserError('unknown or ambiguous waypoints command %r' % args[1])
-            else:
-                raise UserError('extra arguments on command line %r' % args[2:])
-            if subcommand == 'delete-all':
-                flytec.waypoints_delete_all()
-            elif subcommand == 'download':
-                if options.output:
-                    output = open(options.output, 'w')
-                else:
-                    output = sys.stdout
-                if options.format:
-                    format = abbreviator('compegps formatgeo oziexplorer seeyou'.split()).get(options.format)
-                    if format is None:
-                        raise UserError('unknown waypoint format %r' % options.format)
-                else:
-                    format = 'oziexplorer'
-                waypoint.dump(flytec.waypoints(), output, format=format)
-            elif subcommand == 'upload':
-                if options.input:
-                    input = open(options.input)
-                else:
-                    input = sys.stdin
-                flytec.waypoints_upload(waypoint.load(input))
+        execute(options, args, {
+                None: flytec_tracks_download,
+                'dump': flytec_dump,
+                'id': flytec_id,
+                'tracks': {
+                    None: flytec_tracks_download,
+                    'download': flytec_tracks_download,
+                    'list': flytec_tracks_list,
+                    'zip': flytec_tracks_zip},
+                'waypoints': {
+                    None: flytec_waypoints_download,
+                    'delete-all': flytec_waypoints_delete_all,
+                    'download': flytec_waypoints_download,
+                    'upload': flytec_waypoints_upload}})
     except UserError, e:
-        sys.stdout.write('%s: %s\n' % (basename, e.message))
+        sys.stdout.write('%s: %s\n' % (options.basename, e.message))
         return 1
 
 

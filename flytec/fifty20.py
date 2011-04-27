@@ -272,7 +272,6 @@ class Fifty20(object):
     def software_version(self):
         return self.snp.software_version
 
-    @property
     def tracks(self):
         if self._tracks is None:
             self._tracks = self.pbrtl()

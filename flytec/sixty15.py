@@ -363,8 +363,8 @@ class Sixty15(object):
     def dump(self):
         fa = dict((key, self.rfa(key)) for key in FA_FORMAT.keys())
         pa = dict((key, self.rpa(key)) for key in PA_FORMAT.keys())
-        tracks = list(track.to_json(True) for track in self.tracks)
-        waypoints = list(waypoint.to_json() for waypoint in self.waypoints)
+        tracks = list(track.to_json(True) for track in self.tracks())
+        waypoints = list(waypoint.to_json() for waypoint in self.waypoints())
         return dict(fa=fa, pa=pa, tracks=tracks, waypoints=waypoints)
 
     @property
@@ -404,7 +404,6 @@ class Sixty15(object):
             self._pilot_name = self.rfa(FA_Owner)[0].strip()
         return self._pilot_name
 
-    @property
     def tracks(self):
         if self._tracks is None:
             self._tracks = self.act20()

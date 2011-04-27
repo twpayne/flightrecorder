@@ -412,6 +412,9 @@ class Sixty15(object):
     def waypoints(self):
         return self.iact31()
 
+    def waypoints_delete(self, waypoint):
+        raise NotImplementedError
+
     def waypoints_delete_all(self):
         self.act30()
 

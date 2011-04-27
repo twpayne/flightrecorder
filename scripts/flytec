@@ -31,6 +31,7 @@ import zipfile
 
 from flytec import Flytec
 from flytec.utc import UTC
+from flytec.waypoint import Waypoint
 import flytec.waypoint as waypoint
 
 
@@ -166,10 +167,13 @@ def flytec_tracks_zip(options, args):
     zf.close()
 
 
-def flytec_waypoints_delete_all(options, args):
+def flytec_waypoints_delete(options, args):
+    flytec = Flytec(options.device)
     if args:
-        raise UserError('extra arguments on command line %r' % args)
-    Flytec(options.device).waypoints_delete_all()
+        for arg in args:
+            flytec.waypoint_delete(Waypoint(name=arg))
+    else:
+        flytec.waypoints_delete_all()
 
 
 def flytec_waypoints_download(options, args):
@@ -236,11 +240,14 @@ def main(argv):
                     'zip': flytec_tracks_zip},
                 'waypoints': {
                     None: flytec_waypoints_download,
-                    'delete-all': flytec_waypoints_delete_all,
+                    'delete': flytec_waypoints_delete,
                     'download': flytec_waypoints_download,
                     'upload': flytec_waypoints_upload}})
     except UserError, e:
         sys.stdout.write('%s: %s\n' % (options.basename, e.message))
+        return 1
+    except NotImplementedError:
+        sys.stdout.write('%s: command not available on this device')
         return 1
 
 

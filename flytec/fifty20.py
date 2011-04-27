@@ -280,6 +280,9 @@ class Fifty20(object):
     def waypoints(self):
         return self.ipbrwps()
 
+    def waypoints_delete(self, waypoint):
+        self.pbrwpx(waypoint.name)
+
     def waypoints_delete_all(self):
         self.pbrwpx()
 

@@ -92,15 +92,15 @@ def main(argv):
     logging.basicConfig(level=logging.WARN - 10 * options.level)
     try:
         if args:
-            command = abbreviator('check download dump id list waypoints zip'.split()).get(args[0])
+            command = abbreviator('check dump id list tracks waypoints zip'.split()).get(args[0])
             if command is None:
                 raise UserError('unknown or ambiguous command %r' % args[0])
         else:
-            command = 'download'
+            command = 'tracks'
         flytec = Flytec(options.device)
         if flytec is None:
             raise UserError('no flight recorder detected')
-        if command in ('download', 'zip'):
+        if command in ('tracks', 'zip'):
             sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (basename, flytec.manufacturer_name, flytec.model, flytec.serial_number, flytec.pilot_name, flytec.io.filename))
             zipfile = zipfile.ZipFile(options.output or 'tracklogs.zip', 'w') if command == 'zip' else None
             count = 0

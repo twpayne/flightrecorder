@@ -17,6 +17,7 @@
 
 from collections import deque
 import datetime
+from itertools import chain
 import logging
 import re
 import struct
@@ -74,6 +75,16 @@ PA_Speed_FLA        = 0x0e; PA_FORMAT[PA_Speed_FLA]        = 'H'
 PA_MemoStartDelay   = 0x0f; PA_FORMAT[PA_MemoStartDelay]   = 'B'
 PA_Vario_FLE        = 0x10; PA_FORMAT[PA_Vario_FLE]        = 'h'
 PA_Speed_FLE        = 0x11; PA_FORMAT[PA_Speed_FLE]        = 'H'
+
+
+VALID_CHARS = list(chain(
+    (0x20, 0x26, 0x28, 0x29),
+    xrange(0x2d, 0x3b),
+    xrange(0x3c, 0x3f),
+    xrange(0x41, 0x5b),
+    (0x5f,),
+    xrange(0x61, 0x7b)))
+INVALID_CHARS_RE = re.compile(r'[^%s]+' % ''.join('\\x%02x' % c for c in VALID_CHARS))
 
 
 class MockSixty15IO(object):
@@ -316,7 +327,7 @@ class Sixty15(object):
         lon_hemi = 'E' if waypoint.lon > 0 else 'W'
         lon_deg, lon_min = divmod(abs(60 * waypoint.lon), 60)
         self.write('%-16s;%s  %2d\'%6.3f;%s %3d\'%6.3f;%6d;%6d\r\n' % (
-            (waypoint.name or waypoint.id)[:16],
+            INVALID_CHARS_RE.sub('', waypoint.name or waypoint.id)[:16],
             lat_hemi, lat_deg, lat_min,
             lon_hemi, lon_deg, lon_min,
             waypoint.alt,

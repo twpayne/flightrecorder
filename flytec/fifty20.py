@@ -18,6 +18,7 @@
 import datetime
 import logging
 import re
+import struct
 
 from .common import Track, add_igc_filenames
 from .errors import ProtocolError, ReadError, TimeoutError, WriteError
@@ -31,6 +32,12 @@ for model in '5020 5030 6020 6030'.split():
     MANUFACTURER[model] = 0
 for model in 'COMPEO COMPEO+ COMPETINO COMPETINO+ GALILEO'.split():
     MANUFACTURER[model] = 1
+
+MEMORY_MAP = {
+        'glider_id': (224, '16s', str),
+        'glider_type': (192, '16s', str),
+        'pilot_name': (0, '16s', str),
+        'recording_interval': (97, 'B', int)}
 
 XON = '\021'
 XOFF = '\023'
@@ -137,7 +144,7 @@ class Fifty20(object):
         return result
 
     def pbrconf(self):
-        self.none('PBRCONF,')
+        self.none('PBRCONF,', None)
         self._snp = None
 
     def ipbrigc(self):
@@ -148,11 +155,23 @@ class Fifty20(object):
         first, last = address, address + length
         while first < last:
             m = self.one('PBRMEMR,%04X' % first, PBRMEMR_RE)
-            # FIXME check returned address
+            if int(m.group(1), 16) != first:
+                raise ProtocolError('address mismatch')
             data = list(int(i, 16) for i in m.group(2).split(','))
             result.extend(data)
             first += len(data)
         return result[:length]
+
+    def pbrmemw(self, address, value):
+        while value:
+            chunk = value[:8]
+            m = self.one('PBRMEMW,%04X,%d%s%s' % (address, len(chunk), ''.join(',%02X' % ord(c) for c in chunk), ',' * (8 - len(chunk))), PBRMEMR_RE)
+            if int(m.group(1), 16) != address:
+                raise ProtocolError('address mismatch')
+            if not ''.join(chr(int(i, 16)) for i in m.group(2).split(',')).startswith(chunk):
+                raise ProtocolError('readback mismatch')
+            address += len(chunk)
+            value = value[len(chunk):]
 
     def ipbrrts(self):
         for l in self.ieach('PBRRTS,'):
@@ -271,6 +290,25 @@ class Fifty20(object):
     @property
     def software_version(self):
         return self.snp.software_version
+
+    def get(self, key):
+        if key not in MEMORY_MAP:
+            raise NotImplementedError
+        address, format, type = MEMORY_MAP[key]
+        value = ''.join(chr(byte) for byte in self.pbrmemr(address, struct.calcsize(format)))
+        return struct.unpack(format, value)[0]
+
+    def set(self, key, value, first=True, last=True):
+        if key not in MEMORY_MAP:
+            raise NotImplementedError
+        address, format, type = MEMORY_MAP[key]
+        m = re.match(r'(\d+)s\Z', format)
+        if m:
+            width = int(m.group(1))
+            value = value[:width].ljust(width)
+        self.pbrmemw(address, struct.pack(format, type(value)))
+        if last:
+            self.pbrconf()
 
     def tracks(self):
         if self._tracks is None:

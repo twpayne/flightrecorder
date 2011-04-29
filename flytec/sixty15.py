@@ -56,6 +56,12 @@ FA_StallSpeed       = 0x1a; FA_FORMAT[FA_StallSpeed]       = 'H'
 FA_WindWheelGain    = 0x1c; FA_FORMAT[FA_WindWheelGain]    = 'B'
 FA_PreThermalThr    = 0x22; FA_FORMAT[FA_PreThermalThr]    = 'h'
 
+FA_MAP = {
+        'pilot_name': FA_Owner,
+        'glider_type': FA_AC_Type,
+        'glider_id': FA_AC_ID,
+        'utc_offset': FA_UTC_Offset}
+
 PA_FORMAT = {}
 PA_DeviceNr         = 0x00; PA_FORMAT[PA_DeviceNr]         = 'I'
 PA_DeviceTyp        = 0x01; PA_FORMAT[PA_DeviceTyp]        = 'B'
@@ -92,6 +98,7 @@ class MockSixty15IO(object):
     def __init__(self):
         self.filename = 'mock'
         self.lines = deque()
+        self.act82 = False
         self.fa = dict((key, None) for key in FA_FORMAT.keys())
         self.fa[FA_Owner] = ['%-16s' % 'Chrigel Maurer']
         self.fa[FA_AC_Type] = ['%-16s' % 'Advance Omega']
@@ -158,6 +165,10 @@ class MockSixty15IO(object):
         if m:
             self.lines.extend(self.tracks[int(m.group(1), 16)][1])
             return
+        if line == 'ACT_82_00\r\n':
+            self.act82 = True
+            self.lines.append(' Done\r\n')
+            return
         if line == 'ACT_BD_00\r\n':
             self.lines.append(['Flytec 6015\r\n', 'Brauniger IQ Basic\r\n'][self.pa[PA_DeviceTyp][0]])
             return
@@ -176,6 +187,18 @@ class MockSixty15IO(object):
                 self.lines.append('No Par\r\n')
             else:
                 self.lines.append('RPA_%02X_%s\r\n' % (index, ''.join('%02X' % ord(c) for c in struct.pack('<' + PA_FORMAT[index], *self.pa[index]))))
+            return
+        m = re.match(r'\AWFA_([0-9A-F]{2})_((?:[0-9A-F]{2})+)\r\n\Z', line)
+        if m:
+            if not self.act82:
+                self.lines.append('not ready\r\n')
+                return
+            index = int(m.group(1), 16)
+            if index not in FA_FORMAT:
+                self.lines.append('No Par\r\n')
+                return
+            self.fa[index] = [int(x, 16) for x in re.findall(r'..', m.group(2))]
+            self.lines.append(line)
             return
         logging.error('invalid or unimplemented command %r' % line)
 
@@ -342,6 +365,12 @@ class Sixty15(object):
         elif line == 'already exist\r\n':
             raise RuntimeError # FIXME
 
+    def act82(self):
+        self.write('ACT_82_00\r\n')
+        line = self.readline(0.1)
+        if line != ' Done\r\n':
+            raise ProtocolError('unexpected response %r' % line)
+
     def actbd(self):
         self.write('ACT_BD_00\r\n')
         return self.readline().strip()
@@ -362,6 +391,24 @@ class Sixty15(object):
 
     def rpa(self, parameter):
         return self.rxa('P', parameter, PA_FORMAT[parameter])
+
+    def wfa(self, parameter, value):
+        format = FA_FORMAT[parameter]
+        m = re.match(r'(\d+)s\Z', format)
+        if m:
+            width = int(m.group(1))
+            value = INVALID_CHARS_RE.sub('', value)[:width].ljust(width)
+        command = 'WFA_%02X_%s\r\n' % (parameter, ''.join('%02X' % ord(c) for c in struct.pack(format, value)))
+        self.write(command)
+        line = self.readline(0.1)
+        if line == command:
+            pass
+        elif line == 'No Par\r\n':
+            raise ProtocolError('there are no data defined for this parameter number')
+        elif line == 'not ready\r\n':
+            raise ProtocolError('missing the action $82')
+        else:
+            raise ProtocolError('Unexpected response %r' % line)
 
     def to_json(self):
         return {
@@ -414,6 +461,18 @@ class Sixty15(object):
         if self._pilot_name is None:
             self._pilot_name = self.rfa(FA_Owner)[0].strip()
         return self._pilot_name
+
+    def get(self, key):
+        if not key in FA_MAP:
+            raise NotImplementedError
+        return self.rfa(FA_MAP[key])[0]
+
+    def set(self, key, value, first=True, last=True):
+        if not key in FA_MAP:
+            raise NotImplementedError
+        if first:
+            self.act82()
+        self.wfa(FA_MAP[key], value)
 
     def tracks(self):
         if self._tracks is None:

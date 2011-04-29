@@ -85,11 +85,27 @@ def flytec_dump(options, args):
     sys.stdout.write('\n')
 
 
+def flytec_get(options, args):
+    if not args:
+        raise UserError('missing argument')
+    elif len(args) > 1:
+        raise UserError('extra arguments on command line %r' % args[1:])
+    print Flytec(options.device).get(args[0])
+
+
 def flytec_id(options, args):
     if args:
         raise UserError('extra arguments on command line %r' % args)
     json.dump(Flytec(options.device).to_json(), sys.stdout, indent=4, sort_keys=True)
     sys.stdout.write('\n')
+
+
+def flytec_set(options, args):
+    if len(args) < 2:
+        raise UserError('missing argument(s)')
+    elif len(args) > 2:
+        raise UserError('extra arguments on command line %r' % args[1:])
+    Flytec(options.device).set(args[0], args[1])
 
 
 def flytec_tracks_download_helper(options, args, zf):
@@ -232,7 +248,9 @@ def main(argv):
         execute(options, args, {
                 None: flytec_tracks_download,
                 'dump': flytec_dump,
+                'get': flytec_get,
                 'id': flytec_id,
+                'set': flytec_set,
                 'tracks': {
                     None: flytec_tracks_download,
                     'download': flytec_tracks_download,

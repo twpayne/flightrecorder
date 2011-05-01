@@ -18,8 +18,6 @@
 import logging
 import re
 
-from pyproj import Proj
-
 
 class WaypointError(RuntimeError):
     pass
@@ -122,6 +120,7 @@ def load(fp, encoding='iso-8859-1'):
                 continue
             m = re.match(r'\AW\s+(\S+)\s+(\d+)([CDEFGHJKLMNPQRSTUVWX])\s+(\d+)\s+(\d+)\s+\d{2}-(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)-\d{2}\s+\d{2}:\d{2}:\d{2}\s+(-?\d+(?:\.\d+))(?:\s+(.*))?\Z', line)
             if m:
+                from pyproj import Proj
                 zone = m.group(2)
                 if zone not in projs:
                     projs[zone] = Proj(proj='utm', zone=zone, ellps='WGS84')
@@ -167,6 +166,7 @@ def load(fp, encoding='iso-8859-1'):
         for line in lines[1:]:
             m = re.match(r'\A(\S+)\s+(\d+)([A-Z])\s+(\d+)\s+(\d+)\s+(-?\d+)\s+(.*)\Z', line)
             if m:
+                from pyproj import Proj
                 zone = m.group(2)
                 if zone not in projs:
                     projs[zone] = Proj(proj='utm', zone=zone, ellps='WGS84')

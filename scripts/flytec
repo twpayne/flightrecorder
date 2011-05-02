@@ -265,7 +265,7 @@ def main(argv):
         sys.stdout.write('%s: %s\n' % (options.basename, e.message))
         return 1
     except NotImplementedError:
-        sys.stdout.write('%s: command not available on this device')
+        sys.stdout.write('%s: command not available on this device\n' % options.basename)
         return 1
 
 

@@ -113,7 +113,7 @@ class Fifty20(object):
 
     def ieach(self, command, re=None, timeout=1):
         try:
-            self.write(nmea.encode(command))
+            self.write(command.encode('nmea_sentence'))
             if self.readline(timeout) != XOFF:
                 raise ProtocolError
             while True:
@@ -123,7 +123,7 @@ class Fifty20(object):
 		elif re is None:
                     yield line
 		else:
-                    m = re.match(nmea.decode(line))
+                    m = re.match(line.decode('nmea_sentence'))
                     if m is None:
                         raise ProtocolError(line)
                     yield m
@@ -175,7 +175,7 @@ class Fifty20(object):
 
     def ipbrrts(self):
         for l in self.ieach('PBRRTS,'):
-            l = nmea.decode(l)
+            l = l.decode('nmea_sentence')
             m = PBRRTS_RE1.match(l)
             if m:
 		index, count, name = int(m.group(1)), int(m.group(2)), m.group(3)
@@ -231,7 +231,7 @@ class Fifty20(object):
             abs(60 * waypoint.lon) / 60,
             abs(60 * waypoint.lon) % 60,
             'W' if waypoint.lon < 0 else 'E',
-            waypoint.name.encode('iso-8859-1')[:16],
+            waypoint.name.encode('nmea_characters')[:17],
             waypoint.alt))
 
     def ipbrwps(self):

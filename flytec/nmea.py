@@ -15,41 +15,66 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from codecs import Codec, CodecInfo
+import codecs
 import re
 
 
-ENCODE_RE = re.compile('\\A[\x20-\x7f]{1,79}\\Z')
-DECODE_RE = re.compile('\\A\\$(.{1,79})\\*([0-9A-F]{2})\r\n\\Z')
+NMEA_ENCODE_RE = re.compile('\\A[\x20-\x7e]{1,79}\\Z')
+NMEA_DECODE_RE = re.compile('\\A\\$(.{1,79})\\*([0-9A-F]{2})\r\n\\Z')
+NMEA_INVALID_CHAR_RE = re.compile('[^\x20-\x7e]')
 
 
-class Error(RuntimeError):
+class NMEAError(UnicodeError):
     pass
 
 
-class EncodeError(Error):
-    pass
+class NMEASentenceCodec(Codec):
+
+    def decode(self, input, errors='strict'):
+        if errors != 'strict':
+            raise NotImplementedError
+        if not input:
+            return ('', 0)
+        m = NMEA_DECODE_RE.match(input)
+        if not m:
+            raise NMEAError(input)
+        checksum = 0
+        for c in m.group(1):
+            checksum ^= ord(c)
+        if checksum != ord(m.group(2).decode('hex')):
+            raise NMEAError(input)
+        return (m.group(1), len(input))
+
+    def encode(self, input, errors='strict'):
+        if errors != 'strict':
+            raise NotImplementedError
+        if not input:
+            return ('', 0)
+        if not NMEA_ENCODE_RE.match(input):
+            raise NMEAError(input)
+        checksum = 0
+        for c in input:
+            checksum ^= ord(c)
+        return ('$%s*%02X\r\n' % (input, checksum), len(input))
 
 
-class DecodeError(Error):
-    pass
+class NMEACharacterCodec(object):
+
+    def encode(self, input, errors='strict'):
+        if errors != 'replace':
+            raise NotImplementedError
+        return (NMEA_INVALID_CHAR_RE.sub('?', input), len(input))
 
 
-def encode(input):
-    if not ENCODE_RE.match(input):
-        raise EncodeError(input)
-    checksum = 0
-    for c in input:
-        checksum ^= ord(c)
-    return '$%s*%02X\r\n' % (input, checksum)
+def nmea_search(encoding):
+    if encoding == 'nmea_sentence':
+        codec = NMEASentenceCodec()
+        return CodecInfo(codec.encode, codec.decode, name=encoding)
+    if encoding == 'nmea_characters':
+        codec = NMEACharacterCodec()
+        return CodecInfo(codec.encode, None, name=encoding)
+    return None
 
 
-def decode(input):
-    m = DECODE_RE.match(input)
-    if not m:
-        raise DecodeError(input)
-    checksum = 0
-    for c in m.group(1):
-        checksum ^= ord(c)
-    if checksum != ord(m.group(2).decode('hex')):
-        raise DecodeError(input)
-    return m.group(1)
+codecs.register(nmea_search)

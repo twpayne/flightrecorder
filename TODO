@@ -3,3 +3,8 @@ Route management
 Settings
 Compact JSON output
 Web server interface?
+Route deletion
+Flashing
+FlightRecorder base object to define interface
+Flymaster detection
+Factor out mock code

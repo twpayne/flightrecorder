@@ -211,6 +211,8 @@ class MockSixty15IO(object):
 
 class Sixty15(object):
 
+    SUPPORTED_INSTRUMENTS = '6015 IQ-BASIC'.split()
+
     def __init__(self, io):
         self.io = io
         self.buffer = ''

@@ -76,6 +76,8 @@ class SNP(object):
 
 class Fifty20(object):
 
+    SUPPORTED_INSTRUMENTS = '5020 5030 6020 6030 COMPEO COMPEO+ COMPETINO COMPETINO+ GALILEO'.split()
+
     def __init__(self, io):
         self.io = io
         self.buffer = ''

@@ -22,7 +22,7 @@ import re
 
 NMEA_ENCODE_RE = re.compile('\\A[\x20-\x7e]{1,79}\\Z')
 NMEA_DECODE_RE = re.compile('\\A\\$(.{1,79})\\*([0-9A-F]{2})\r\n\\Z')
-NMEA_INVALID_CHAR_RE = re.compile('[^\x20-\x7e]')
+NMEA_INVALID_CHAR_RE = re.compile('[^\x20-\x7e]+')
 
 
 class NMEAError(UnicodeError):
@@ -61,10 +61,17 @@ class NMEASentenceCodec(Codec):
 
 class NMEACharacterCodec(object):
 
+    def decode(self, input, errors='strict'):
+        return unicode(input)
+
     def encode(self, input, errors='strict'):
-        if errors != 'replace':
+        if errors == 'replace':
+            return (NMEA_INVALID_CHAR_RE.sub(lambda m: '?' * len(line), input), len(input))
+        elif errors == 'strict':
+            if NMEA_INVALID_CHAR_RE.search(input):
+                raise UnicodeError
+        else:
             raise NotImplementedError
-        return (NMEA_INVALID_CHAR_RE.sub('?', input), len(input))
 
 
 def nmea_search(encoding):

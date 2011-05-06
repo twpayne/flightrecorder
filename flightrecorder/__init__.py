@@ -1,4 +1,4 @@
-#   __init__.py  Flytec and Brauniger top level functions
+#   __init__.py  Flight recorder top level functions
 #   Copyright (C) 2011  Tom Payne <twpayne@gmail.com>
 #
 #   This program is free software: you can redistribute it and/or modify
@@ -15,7 +15,7 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from .flytec import Flytec
+from .flightrecorder import FlightRecorder
 
 
-__all__ = ['Flytec']
+__all__ = ['FlightRecorder']

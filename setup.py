@@ -3,11 +3,11 @@
 from distutils.core import setup
 
 setup(
-        name='flytec-utils',
+        name='flightrecorder',
         version='20110414',
-        description='Utilities for Flytec and Brauniger flight recorders',
+        description='Utilities for flight recorders',
         author='Tom Payne',
         author_email='twpayne@gmail.com',
-        url='https://github.com/twpayne/flytec-utils',
-        packages=['flytec'],
-        scripts=['scripts/flytec', 'scripts/flytec-gui'])
+        url='https://github.com/twpayne/flightrecorder',
+        packages=['flightrecorder'],
+        scripts=['scripts/flightrecorder', 'scripts/flightrecorder-gui'])

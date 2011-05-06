@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-#   flytec-download  Download IGC tracklogs from Brauniger IQ Basic and Flytec 6015 track recorders
+#   flightrecorder  Flight recorder interface
 #   Copyright (C) 2011  Tom Payne <twpayne@gmail.com>
 #
 #   This program is free software: you can redistribute it and/or modify
@@ -29,10 +29,10 @@ import sys
 import time
 import zipfile
 
-from flytec import Flytec
-from flytec.utc import UTC
-from flytec.waypoint import Waypoint
-import flytec.waypoint as waypoint
+from flightrecorder import FlightRecorder
+from flightrecorder.utc import UTC
+from flightrecorder.waypoint import Waypoint
+import flightrecorder.waypoint as waypoint
 
 
 class UserError(RuntimeError):
@@ -78,42 +78,42 @@ def abbreviator(items):
     return result
 
 
-def flytec_dump(options, args):
+def flightrecorder_dump(options, args):
     if args:
         raise UserError('extra arguments on command line %r' % args)
-    json.dump(Flytec(options.device).dump(), sys.stdout, indent=4, sort_keys=True)
+    json.dump(FlightRecorder(options.device, options.instrument).dump(), sys.stdout, indent=4, sort_keys=True)
     sys.stdout.write('\n')
 
 
-def flytec_get(options, args):
+def flightrecorder_get(options, args):
     if not args:
         raise UserError('missing argument')
     elif len(args) > 1:
         raise UserError('extra arguments on command line %r' % args[1:])
-    print Flytec(options.device).get(args[0])
+    print FlightRecorder(options.device, options.instrument).get(args[0])
 
 
-def flytec_id(options, args):
+def flightrecorder_id(options, args):
     if args:
         raise UserError('extra arguments on command line %r' % args)
-    json.dump(Flytec(options.device).to_json(), sys.stdout, indent=4, sort_keys=True)
+    json.dump(FlightRecorder(options.device, options.instrument).to_json(), sys.stdout, indent=4, sort_keys=True)
     sys.stdout.write('\n')
 
 
-def flytec_set(options, args):
+def flightrecorder_set(options, args):
     if len(args) < 2:
         raise UserError('missing argument(s)')
     elif len(args) > 2:
         raise UserError('extra arguments on command line %r' % args[1:])
-    Flytec(options.device).set(args[0], args[1])
+    FlightRecorder(options.device, options.instrument).set(args[0], args[1])
 
 
-def flytec_tracks_download_helper(options, args, zf):
-    flytec = Flytec(options.device)
-    sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (options.basename, flytec.manufacturer_name, flytec.model, flytec.serial_number, flytec.pilot_name, flytec.io.filename))
+def flightrecorder_tracks_download_helper(options, args, zf):
+    flightrecorder = FlightRecorder(options.device, options.instrument)
+    sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (options.basename, flightrecorder.manufacturer_name, flightrecorder.model, flightrecorder.serial_number, flightrecorder.pilot_name, flightrecorder.io.filename))
     count = 0
     range_sets = list(RangeSet(arg) for arg in args)
-    for i, track in enumerate(flytec.tracks()):
+    for i, track in enumerate(flightrecorder.tracks()):
         if range_sets and not any(i + 1 in rs for rs in range_sets):
             continue
         if zf is None and os.path.exists(track.igc_filename) and not options.overwrite:
@@ -158,24 +158,24 @@ def flytec_tracks_download_helper(options, args, zf):
     sys.stdout.write('%s: %d tracklogs downloaded\n' % (options.basename, count))
 
 
-def flytec_tracks_download(options, args):
-    for track in flytec_tracks_download_helper(options, args, None):
+def flightrecorder_tracks_download(options, args):
+    for track in flightrecorder_tracks_download_helper(options, args, None):
         with open(track.igc_filename, 'w') as output:
             for line in track.igc:
                 output.write(line)
 
 
-def flytec_tracks_list(options, args):
-    json.dump(dict(tracks=[track.to_json() for track in Flytec(options.device).tracks()]), sys.stdout, indent=4, sort_keys=True)
+def flightrecorder_tracks_list(options, args):
+    json.dump(dict(tracks=[track.to_json() for track in FlightRecorder(options.device, options.instrument).tracks()]), sys.stdout, indent=4, sort_keys=True)
     sys.stdout.write('\n')
 
 
-def flytec_tracks_zip(options, args):
+def flightrecorder_tracks_zip(options, args):
     filename = 'tracks.zip'
     if args and re.search(r'\.zip\Z', args[0], re.I):
         filename, args = args[0], args[1:]
     zf = zipfile.ZipFile(filename, 'w')
-    for track in flytec_tracks_download_helper(options, args, zf):
+    for track in flightrecorder_tracks_download_helper(options, args, zf):
         zi = zipfile.ZipInfo(track.igc_filename)
         zi.date_time = (track.datetime + track.duration).timetuple()[:6]
         zi.external_attr = 0644 << 16
@@ -183,16 +183,16 @@ def flytec_tracks_zip(options, args):
     zf.close()
 
 
-def flytec_waypoints_delete(options, args):
-    flytec = Flytec(options.device)
+def flightrecorder_waypoints_delete(options, args):
+    flightrecorder = FlightRecorder(options.device, options.instrument)
     if args:
         for arg in args:
-            flytec.waypoint_delete(Waypoint(name=arg))
+            flightrecorder.waypoint_delete(Waypoint(name=arg))
     else:
-        flytec.waypoints_delete_all()
+        flightrecorder.waypoints_delete_all()
 
 
-def flytec_waypoints_download(options, args):
+def flightrecorder_waypoints_download(options, args):
     if not args:
         output = sys.stdout
     elif len(args) == 1:
@@ -205,17 +205,17 @@ def flytec_waypoints_download(options, args):
             raise UserError('unknown waypoint format %r' % options.format)
     else:
         format = 'oziexplorer'
-    waypoint.dump(Flytec(options.device).waypoints(), output, format=format)
+    waypoint.dump(FlightRecorder(options.device, options.instrument).waypoints(), output, format=format)
 
 
-def flytec_waypoints_upload(options, args):
+def flightrecorder_waypoints_upload(options, args):
     if not args:
         input = sys.stdin
     elif len(args) == 1:
         input = open(args[0])
     else:
         raise UserError('extra arguments on command line: %r' % args[1:])
-    Flytec(options.device).waypoints_upload(waypoint.load(input))
+    FlightRecorder(options.device, options.instrument).waypoints_upload(waypoint.load(input))
 
 
 def execute(options, args, commands):
@@ -239,6 +239,7 @@ def main(argv):
     parser.add_option('-d', '--device', metavar='DEVICE', help='set device filename')
     parser.add_option('-f', '--format', metavar='FORMAT', help='set output format')
     parser.add_option('-o', '--overwrite', action='store_true', help='re-download already downloaded tracklogs')
+    parser.add_option('-i', '--instrument', metavar='TYPE', type='choice', choices=FlightRecorder.SUPPORTED_INSTRUMENTS, help='set device type')
     parser.add_option('-v', '--verbose', action='count', dest='level', help='show debugging information')
     parser.set_defaults(level=0)
     options, args = parser.parse_args(argv[1:])
@@ -246,21 +247,21 @@ def main(argv):
     logging.basicConfig(level=logging.WARN - 10 * options.level)
     try:
         execute(options, args, {
-                None: flytec_tracks_download,
-                'dump': flytec_dump,
-                'get': flytec_get,
-                'id': flytec_id,
-                'set': flytec_set,
+                None: flightrecorder_tracks_download,
+                'dump': flightrecorder_dump,
+                'get': flightrecorder_get,
+                'id': flightrecorder_id,
+                'set': flightrecorder_set,
                 'tracks': {
-                    None: flytec_tracks_download,
-                    'download': flytec_tracks_download,
-                    'list': flytec_tracks_list,
-                    'zip': flytec_tracks_zip},
+                    None: flightrecorder_tracks_download,
+                    'download': flightrecorder_tracks_download,
+                    'list': flightrecorder_tracks_list,
+                    'zip': flightrecorder_tracks_zip},
                 'waypoints': {
-                    None: flytec_waypoints_download,
-                    'delete': flytec_waypoints_delete,
-                    'download': flytec_waypoints_download,
-                    'upload': flytec_waypoints_upload}})
+                    None: flightrecorder_waypoints_download,
+                    'delete': flightrecorder_waypoints_delete,
+                    'download': flightrecorder_waypoints_download,
+                    'upload': flightrecorder_waypoints_upload}})
     except UserError, e:
         sys.stdout.write('%s: %s\n' % (options.basename, e.message))
         return 1

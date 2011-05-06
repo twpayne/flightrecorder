@@ -76,7 +76,7 @@ def dump(waypoints, file, format='oziexplorer'):
             color = int(waypoint.color[1:], 16) if hasattr(waypoint, 'color') else None
             file.write(u'%d,%s,%f,%f,,,1,,%s,,%s,,,%s,%s\r\n' % (
                     i + 1,
-                    waypoint.id,
+                    getattr(waypoint, 'id', getattr(waypoint, 'name', '')[:6]),
                     waypoint.lat,
                     waypoint.lon,
                     '%d' % (((color & 0xff) << 16) + (color & 0xff00) + (color >> 16)) if color is not None else '',

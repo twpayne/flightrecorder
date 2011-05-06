@@ -5,9 +5,9 @@
 *.zip
 /build
 /debian/files
-/debian/flytec-utils.debhelper.log
-/debian/flytec-utils.postinst.debhelper
-/debian/flytec-utils.prerm.debhelper
-/debian/flytec-utils.substvars
-/debian/flytec-utils/
+/debian/flightrecorder.debhelper.log
+/debian/flightrecorder.postinst.debhelper
+/debian/flightrecorder.prerm.debhelper
+/debian/flightrecorder.substvars
+/debian/flightrecorder/
 /debian/python-module-stampdir/

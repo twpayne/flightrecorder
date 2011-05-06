@@ -1,16 +1,22 @@
-flytec-utils (20110426) maverick; urgency=low
+flightrecorder (20110506) maverick; urgency=low
+
+  * Version bump
+
+ -- Tom Payne <twpayne@gmail.com>  Fri, 06 May 2011 09:59:37 +0200
+
+flightrecorder (20110426) maverick; urgency=low
 
   * Version bump
 
  -- Tom Payne <twpayne@gmail.com>  Tue, 26 Apr 2011 18:41:01 +0200
 
-flytec-utils (20110414) maverick; urgency=low
+flightrecorder (20110414) maverick; urgency=low
 
   * Version bump
 
  -- Tom Payne <twpayne@gmail.com>  Thu, 14 Apr 2011 13:39:56 +0200
 
-flytec-utils (20110411) unstable; urgency=low
+flightrecorder (20110411) unstable; urgency=low
 
   * Initial release (Closes: #1)
 

@@ -1,7 +1,7 @@
-flytec-utils
-============
+flightrecorder
+==============
 
-Utilities for Flytec and Brauniger flight recorders
+Utilities for flight recorders
 Copyright (C) 2011  Tom Payne <twpayne@gmail.com>
 
 
@@ -16,7 +16,7 @@ Downloading tracklogs
 ---------------------
 
 To download all tracklogs, just run
-    flytec
+    flightrecorder
 The program will attempt to detect your flight recorder.
 
 

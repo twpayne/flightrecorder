@@ -8,8 +8,8 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from flytec.waypoint import Waypoint
-import flytec.waypoint as waypoint
+from flightrecorder.waypoint import Waypoint
+import flightrecorder.waypoint as waypoint
 
 
 class TestWaypointSet(unittest.TestCase):

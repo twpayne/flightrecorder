@@ -1,36 +1,39 @@
 #!/usr/bin/python
 
 
+import os.path
+import sys
 import unittest
 
-import flytec.nmea as nmea
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+import flightrecorder.nmea as nmea
 
 
 class NMEATestCase(unittest.TestCase):
 
     def testEncode(self):
-        self.assertEquals(nmea.encode('PBRSNP,'), '$PBRSNP,*21\r\n')
-        self.assertEquals(nmea.encode('PBRTL,'), '$PBRTL,*74\r\n')
+        self.assertEquals('PBRSNP,'.encode('nmea_sentence'), '$PBRSNP,*21\r\n')
+        self.assertEquals('PBRTL,'.encode('nmea_sentence'), '$PBRTL,*74\r\n')
 
     def testEncodeError(self):
-        self.assertRaises(nmea.EncodeError, lambda: nmea.encode(''))
-        self.assertRaises(nmea.EncodeError, lambda: nmea.encode('A' * 80))
-        self.assertRaises(nmea.EncodeError, lambda: nmea.encode('\0'))
-        self.assertRaises(nmea.EncodeError, lambda: nmea.encode('\x1f'))
-        self.assertRaises(nmea.EncodeError, lambda: nmea.encode('\x80'))
-        self.assertRaises(nmea.EncodeError, lambda: nmea.encode('\xff'))
+        self.assertRaises(UnicodeError, lambda: ('A' * 80).encode('nmea_sentence'))
+        self.assertRaises(UnicodeError, lambda: '\0'.encode('nmea_sentence'))
+        self.assertRaises(UnicodeError, lambda: '\x1f'.encode('nmea_sentence'))
+        self.assertRaises(UnicodeError, lambda: '\x80'.encode('nmea_sentence'))
+        self.assertRaises(UnicodeError, lambda: '\xff'.encode('nmea_sentence'))
 
     def testDecode(self):
-        self.assertEquals(nmea.decode('$PBRSNP,*21\r\n'), 'PBRSNP,')
-        self.assertEquals(nmea.decode('$PBRTL,*74\r\n'), 'PBRTL,')
+        self.assertEquals('$PBRSNP,*21\r\n'.decode('nmea_sentence'), 'PBRSNP,')
+        self.assertEquals('$PBRTL,*74\r\n'.decode('nmea_sentence'), 'PBRTL,')
 
     def testDecodeError(self):
-        self.assertRaises(nmea.DecodeError, lambda: nmea.decode('PBRSNP,*21\r\n'))
-        self.assertRaises(nmea.DecodeError, lambda: nmea.decode('$PBRSNP,21\r\n'))
-        self.assertRaises(nmea.DecodeError, lambda: nmea.decode('$PBRSNP,*2\r\n'))
-        self.assertRaises(nmea.DecodeError, lambda: nmea.decode('$PBRSNP,*21\n'))
-        self.assertRaises(nmea.DecodeError, lambda: nmea.decode('$PBRSNP,*21\r'))
-        self.assertRaises(nmea.DecodeError, lambda: nmea.decode('$PBRSNP,*20\r\n'))
+        self.assertRaises(UnicodeError, lambda: 'PBRSNP,*21\r\n'.decode('nmea_sentence'))
+        self.assertRaises(UnicodeError, lambda: '$PBRSNP,21\r\n'.decode('nmea_sentence'))
+        self.assertRaises(UnicodeError, lambda: '$PBRSNP,*2\r\n'.decode('nmea_sentence'))
+        self.assertRaises(UnicodeError, lambda: '$PBRSNP,*21\n'.decode('nmea_sentence'))
+        self.assertRaises(UnicodeError, lambda: '$PBRSNP,*21\r'.decode('nmea_sentence'))
+        self.assertRaises(UnicodeError, lambda: '$PBRSNP,*20\r\n'.decode('nmea_sentence'))
 
 
 if __name__ == '__main__':

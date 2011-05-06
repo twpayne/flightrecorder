@@ -13,8 +13,8 @@ pygtk.require('2.0')
 import gtk
 import gobject
 
-from flytec import Flytec, MANUFACTURER_NAME
-from flytec.utc import UTC
+from flightrecorder import FlightRecorder, MANUFACTURER_NAME
+from flightrecorder.utc import UTC
 
 #
 # Page
@@ -35,9 +35,9 @@ class Page(gtk.Frame):
 
 class AboutView(gtk.Table):
 
-    def __init__(self, flytec):
+    def __init__(self, flightrecorder):
         gtk.Table.__init__(self, 4, 2)
-        self.flytec = flytec
+        self.flightrecorder = flightrecorder
         self.attach(gtk.Label('Instrument'), 0, 1, 0, 1)
         self.instrument_label = gtk.Label()
         self.attach(self.instrument_label, 1, 2, 0, 1)
@@ -53,10 +53,10 @@ class AboutView(gtk.Table):
         self.connect_after('realize', self.after_realize)
 
     def after_realize(self, data):
-        self.instrument_label.set_text('%s %s' % (MANUFACTURER_NAME[self.flytec.manufacturer], self.flytec.model))
-        self.pilot_name_label.set_text(self.flytec.pilot_name)
-        self.serial_number_label.set_text(str(self.flytec.serial_number))
-        self.software_version_label.set_text(self.flytec.software_version)
+        self.instrument_label.set_text('%s %s' % (MANUFACTURER_NAME[self.flightrecorder.manufacturer], self.flightrecorder.model))
+        self.pilot_name_label.set_text(self.flightrecorder.pilot_name)
+        self.serial_number_label.set_text(str(self.flightrecorder.serial_number))
+        self.software_version_label.set_text(self.flightrecorder.software_version)
 
 #
 # TracksTreeView
@@ -64,9 +64,9 @@ class AboutView(gtk.Table):
 
 class TracksTreeView(gtk.TreeView):
 
-    def __init__(self, flytec):
+    def __init__(self, flightrecorder):
         gtk.TreeView.__init__(self)
-        self.flytec = flytec
+        self.flightrecorder = flightrecorder
         self.set_rubber_banding(True)
         self.set_rules_hint(True)
         self.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
@@ -91,7 +91,7 @@ class TracksTreeView(gtk.TreeView):
         model = self.get_model()
         model.freeze_notify()
         try:
-            for track in self.flytec.tracks:
+            for track in self.flightrecorder.tracks:
                 timedelta = track.datetime - datetime.datetime(2000, 1, 1, tzinfo=UTC())
                 intdatetime = 24 * 60 * 60 * timedelta.days + timedelta.seconds
                 intduration = 24 * 60 * 60 * track.duration.days + track.duration.seconds
@@ -118,10 +118,10 @@ class TracksTreeView(gtk.TreeView):
 
 class TracksView(gtk.HBox):
 
-    def __init__(self, flytec):
+    def __init__(self, flightrecorder):
         gtk.HBox.__init__(self)
-        self.flytec = flytec
-        self.tracks_tree_view = TracksTreeView(self.flytec)
+        self.flightrecorder = flightrecorder
+        self.tracks_tree_view = TracksTreeView(self.flightrecorder)
         self.pack_start(self.tracks_tree_view)
         button_box = gtk.VButtonBox()
         button = gtk.Button(stock=gtk.STOCK_SAVE)
@@ -163,9 +163,9 @@ class TracksView(gtk.HBox):
 
 class WaypointsView(gtk.TreeView):
 
-    def __init__(self, flytec):
+    def __init__(self, flightrecorder):
         gtk.TreeView.__init__(self)
-        self.flytec = flytec
+        self.flightrecorder = flightrecorder
         self.set_rubber_banding(True)
         self.set_rules_hint(True)
         self.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
@@ -193,7 +193,7 @@ class WaypointsView(gtk.TreeView):
         model = self.get_model()
         model.freeze_notify()
         try:
-            for waypoint in self.flytec.waypoints():
+            for waypoint in self.flightrecorder.waypoints():
                 deg, mmin = divmod(abs(waypoint.lat), 60000)
                 min, mmin = divmod(mmin, 1000)
                 if waypoint.lat < 0: hemi = 'S'
@@ -215,9 +215,9 @@ class WaypointsView(gtk.TreeView):
 
 class RoutesView(gtk.TreeView):
 
-    def __init__(self, flytec):
+    def __init__(self, flightrecorder):
         gtk.TreeView.__init__(self)
-        self.flytec = flytec
+        self.flightrecorder = flightrecorder
         self.set_model(gtk.TreeStore(gobject.TYPE_PYOBJECT, gobject.TYPE_STRING, gobject.TYPE_STRING))
         column = gtk.TreeViewColumn('Name', gtk.CellRendererText(), text=1)
         self.append_column(column)
@@ -232,7 +232,7 @@ class RoutesView(gtk.TreeView):
         model = self.get_model()
         model.freeze_notify()
         try:
-            for route in self.flytec.routes():
+            for route in self.flightrecorder.routes():
                 iter = model.append(None, row=[route, route.name, None])
                 for routepoint in route.routepoints:
                     model.append(iter, row=[routepoint, routepoint.long_name, routepoint.short_name])
@@ -246,13 +246,13 @@ class RoutesView(gtk.TreeView):
 
 class LogBuffer(gtk.TextBuffer):
 
-    def __init__(self, flytec):
+    def __init__(self, flightrecorder):
         gtk.TextBuffer.__init__(self)
         self.read_tag = self.create_tag(None, family='monospace')
         self.write_tag = self.create_tag(None, family='monospace', weight=pango.WEIGHT_BOLD)
         handler = logging.Handler()
         handler.emit = self.emit
-        flytec.io.logger.addHandler(handler)
+        flightrecorder.io.logger.addHandler(handler)
 
     def emit(self, record):
         if record.__dict__.has_key('direction') and not record.__dict__.has_key('x'):
@@ -268,8 +268,8 @@ class LogBuffer(gtk.TextBuffer):
 
 class LogView(gtk.TextView):
 
-    def __init__(self, flytec):
-        gtk.TextView.__init__(self, LogBuffer(flytec))
+    def __init__(self, flightrecorder):
+        gtk.TextView.__init__(self, LogBuffer(flightrecorder))
         self.set_editable(False)
         buffer = self.get_buffer()
         self.end_mark = buffer.create_mark(None, buffer.get_end_iter(), False)
@@ -284,17 +284,17 @@ class LogView(gtk.TextView):
 
 class MainWindow(gtk.Window):
 
-    def __init__(self, flytec):
+    def __init__(self, flightrecorder):
         gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
-        self.flytec = flytec
+        self.flightrecorder = flightrecorder
         self.set_default_size(640, 480)
         vbox = gtk.VBox()
         notebook = gtk.Notebook()
-        notebook.append_page(Page(TracksView(self.flytec)), gtk.Label('Tracks'))
-        #notebook.append_page(Page(WaypointsView(self.flytec)), gtk.Label('Waypoints'))
-        #notebook.append_page(Page(RoutesView(self.flytec)), gtk.Label('Routes'))
-        notebook.append_page(Page(AboutView(self.flytec)), gtk.Label('About'))
-        #notebook.append_page(Page(LogView(self.flytec)), gtk.Label('Log'))
+        notebook.append_page(Page(TracksView(self.flightrecorder)), gtk.Label('Tracks'))
+        #notebook.append_page(Page(WaypointsView(self.flightrecorder)), gtk.Label('Waypoints'))
+        #notebook.append_page(Page(RoutesView(self.flightrecorder)), gtk.Label('Routes'))
+        notebook.append_page(Page(AboutView(self.flightrecorder)), gtk.Label('About'))
+        #notebook.append_page(Page(LogView(self.flightrecorder)), gtk.Label('Log'))
         vbox.pack_start(notebook)
         hbuttonbox = gtk.HButtonBox()
         button = gtk.Button(stock=gtk.STOCK_QUIT)
@@ -305,7 +305,7 @@ class MainWindow(gtk.Window):
         self.connect_after('realize', self.after_realize)
 
     def after_realize(self, data):
-        self.set_title('%s %s #%s (%s)' % (MANUFACTURER_NAME[self.flytec.manufacturer], self.flytec.model, self.flytec.serial_number, self.flytec.pilot_name))
+        self.set_title('%s %s #%s (%s)' % (MANUFACTURER_NAME[self.flightrecorder.manufacturer], self.flightrecorder.model, self.flightrecorder.serial_number, self.flightrecorder.pilot_name))
 
     def on_quit(self, data):
         self.destroy()
@@ -318,8 +318,8 @@ if __name__ == '__main__':
     op = optparse.OptionParser()
     op.add_option('-d', '--device', dest='device', metavar='DEVICE')
     options, args = op.parse_args()
-    flytec = Flytec(options.device)
-    window = MainWindow(flytec)
+    flightrecorder = FlightRecorder(options.device)
+    window = MainWindow(flightrecorder)
     window.connect('destroy', gtk.main_quit)
     window.show_all()
     gtk.main()

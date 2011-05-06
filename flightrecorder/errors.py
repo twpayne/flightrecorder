@@ -18,7 +18,7 @@
 class Error(RuntimeError):
 
     def __init__(self, message=None):
-        RuntimeError.__init__(self, message)
+        RuntimeError.__init__(self)
         self.message = message
 
 

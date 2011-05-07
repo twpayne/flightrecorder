@@ -15,19 +15,20 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from datetime import datetime, timedelta
+import datetime
 import logging
 import re
 import struct
 
 from .base import FlightRecorderBase
+from .common import Track, add_igc_filenames
 from .errors import ProtocolError, ReadError, TimeoutError, WriteError
 import nmea
 from .utc import UTC
 from .waypoint import Waypoint
 
 
-EPOCH = datetime(2000, 1, 1, 0, 0, 0)
+EPOCH = datetime.datetime(2000, 1, 1, 0, 0, 0)
 PBRSNP_RE = re.compile(r'PBRSNP,([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)\Z')
 PFMCFG_RE = re.compile(r'FMCFG,([A-Z]+):(.*)\Z')
 PFMDNL_LST_RE = re.compile(r'PFMLST,(\d+),(\d+),(\d+).(\d+).(\d+),(\d+):(\d+):(\d+),(\d+):(\d+):(\d+)\Z')
@@ -59,15 +60,6 @@ class SNP(_Struct):
         self.software_version = software_version
 
 
-class Tracklog(_Struct):
-
-    def __init__(self, count, index, dt, duration):
-        self.count = count
-        self.index = index
-        self.dt = dt
-        self.duration = duration
-
-
 class FlightInformationRecord(_Struct):
 
     def __init__(self, data):
@@ -90,7 +82,7 @@ class KeyTrackPositionRecord(_Struct):
         self.lon = fields[2]
         self.alt = fields[3]
         self.pressure = fields[4]
-        self.dt = EPOCH + timedelta(seconds=fields[5])
+        self.dt = EPOCH + datetime.timedelta(seconds=fields[5])
 
 
 class TrackPositionRecordDelta(_Struct):
@@ -102,7 +94,7 @@ class TrackPositionRecordDelta(_Struct):
         self.lon_offset = fields[2]
         self.alt_offset = fields[3]
         self.pressure_offset = fields[4]
-        self.dt_offset = timedelta(seconds=fields[5])
+        self.dt_offset = datetime.timedelta(seconds=fields[5])
 
 
 class TrackPositionRecordDeltas(_Struct):
@@ -122,6 +114,7 @@ class Flymaster(FlightRecorderBase):
     def __init__(self, io, line=None):
         self.io = io
         self._snp = SNP(*PBRSNP_RE.match(line.decode('nmea_sentence')).groups()) if line else None
+        self._pfmdnl_lst = None
         self.buffer = ''
 
     def readline(self, timeout):
@@ -202,14 +195,17 @@ class Flymaster(FlightRecorderBase):
         return SNP(*self.one('PFMSNP,', PFMSNP_RE).groups())
 
     def ipfmdnl_lst(self):
+        tracks = []
         for m in self.ieach('PFMDNL,LST,', PFMDNL_LST_RE):
             count, index, day, month, year, hour, minute, second = map(int, m.groups()[:8])
-            dt = datetime(year + 2000, month, day, hour, minute, second, tzinfo=UTC())
             hours, minutes, seconds = map(int, m.groups()[8:11])
-            duration = timedelta(hours=hours, minutes=minutes, seconds=seconds)
-            yield Tracklog(count, index, dt, duration)
+            tracks.append(Track(
+                index=index,
+                datetime=datetime.datetime(year + 2000, month, day, hour, minute, second, tzinfo=UTC()),
+                duration=datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)))
             if index + 1 == count:
                 break
+        return add_igc_filenames(tracks, 'XFR', self.serial_number)
 
     def pfmdnl_lst(self):
         return list(self.ipfmdnl_lst())
@@ -293,6 +289,11 @@ class Flymaster(FlightRecorderBase):
     @property
     def pilot_name(self):
         return None
+
+    def tracks(self):
+        if self._pfmdnl_lst is None:
+            self._pfmdnl_lst = self.pfmdnl_lst()
+        return self._pfmdnl_lst
 
     def waypoints(self):
         return self.pfmwpl()

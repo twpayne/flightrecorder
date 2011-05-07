@@ -250,7 +250,7 @@ class Flymaster(FlightRecorderBase):
         return list(self.ipfmwpl())
 
     def pfmwpr(self, waypoint):
-        name = waypoint.name.encode('nmea_characters', 'replace')[:17].ljust(17)
+        name = re.sub(r'[^ 0-9A-Z]+', lambda m: ' ' * len(m.group(0)), waypoint.name[:16]).ljust(16)
         m = self.one('PFMWPR,%02d%06.3f,%s,%03d%06.3f,%s,,%s,%04d,%d' % (
             abs(60 * waypoint.lat) / 60,
             abs(60 * waypoint.lat) % 60,
@@ -261,7 +261,7 @@ class Flymaster(FlightRecorderBase):
             name,
             waypoint.alt,
             1 if getattr(waypoint, 'airfield', False) else 0), PFMWPR_RE)
-        if not name.startswith(m.group(1)):
+        if name != m.group(1):
             raise ProtocolError
 
     @property

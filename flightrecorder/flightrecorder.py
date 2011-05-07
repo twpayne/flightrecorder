@@ -26,7 +26,7 @@ import flymaster
 from .flymaster import Flymaster
 from .serialio import SerialIO
 import sixty15
-from .sixty15 import MockSixty15IO, Sixty15
+from .sixty15 import Sixty15
 
 
 DEVICE_GLOBS = {
@@ -51,8 +51,6 @@ class FlightRecorder(object):
         if model is not None and model not in FlightRecorder.SUPPORTED_MODELS:
             raise RuntimeError # FIXME
         for device in devices:
-            if device == 'mock-6015':
-                return Sixty15(MockSixty15IO())
             try:
                 io = SerialIO(device)
             except IOError:

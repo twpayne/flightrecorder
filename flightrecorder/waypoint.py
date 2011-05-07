@@ -39,7 +39,7 @@ def dump(waypoints, file, format='oziexplorer'):
         file.write(u'U  1\r\n')
         for waypoint in waypoints:
             file.write(u'W  %6s A %f\u00ba%s %f\u00ba%s 01-JAN-70 00:00:00 %f %s\r\n' % (
-                    waypoint.id,
+                    getattr(waypoint, 'id', getattr(waypoint, 'name', '')[:6]),
                     abs(waypoint.lat),
                     'S' if waypoint.lat < 0 else 'N',
                     abs(waypoint.lon),
@@ -54,7 +54,7 @@ def dump(waypoints, file, format='oziexplorer'):
         file.write(u'$FormatGEO\r\n')
         for waypoint in waypoints:
             file.write(u'%-6s    %s %02d %02d %05.2f    %s %03d %02d %05.2f  %4d  %s\r\n' % (
-                    waypoint.id,
+                    getattr(waypoint, 'id', getattr(waypoint, 'name', '')[:6]),
                     'S' if waypoint.lat < 0 else 'N',
                     abs(waypoint.lat),
                     (60 * abs(waypoint.lat)) % 60,
@@ -86,7 +86,7 @@ def dump(waypoints, file, format='oziexplorer'):
         for waypoint in waypoints:
             file.write(u'"%s","%s",,%02d%06.3f%s,%03d%06.3f%s,%s,,,,,"%s"\r\n' % (
                     waypoint.name,
-                    waypoint.id,
+                    getattr(waypoint, 'id', getattr(waypoint, 'name', '')[:6]),
                     abs(waypoint.lat),
                     (60 * abs(waypoint.lat)) % 60,
                     'S' if waypoint.lat < 0 else 'N',

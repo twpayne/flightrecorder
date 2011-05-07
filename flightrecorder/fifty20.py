@@ -78,10 +78,10 @@ class Fifty20(object):
 
     SUPPORTED_INSTRUMENTS = '5020 5030 6020 6030 COMPEO COMPEO+ COMPETINO COMPETINO+ GALILEO'.split()
 
-    def __init__(self, io):
+    def __init__(self, io, line=None):
         self.io = io
         self.buffer = ''
-        self._snp = None
+        self._snp = SNP(*PBRSNP_RE.match(line[1:-1].decode('nmea_sentence')).groups()) if line else None
         self._tracks = None
         self._waypoints = None
 

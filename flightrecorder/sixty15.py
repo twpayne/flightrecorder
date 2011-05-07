@@ -213,10 +213,10 @@ class Sixty15(object):
 
     SUPPORTED_INSTRUMENTS = '6015 IQ-BASIC'.split()
 
-    def __init__(self, io):
+    def __init__(self, io, line=None):
         self.io = io
         self.buffer = ''
-        self._bd = None
+        self._bd = line.rstrip() if line else None
         self._serial_number = None
         self._manufacturer = None
         self._model = None

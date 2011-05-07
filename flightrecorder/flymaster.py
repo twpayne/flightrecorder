@@ -27,6 +27,7 @@ from .waypoint import Waypoint
 
 
 EPOCH = datetime(2000, 1, 1, 0, 0, 0)
+PBRSNP_RE = re.compile(r'PBRSNP,([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)\Z')
 PFMDNL_LST_RE = re.compile(r'PFMLST,(\d+),(\d+),(\d+).(\d+).(\d+),(\d+):(\d+):(\d+),(\d+):(\d+):(\d+)\Z')
 PFMSNP_RE = re.compile(r'PFMSNP,([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)\Z')
 PFMWPL_RE = re.compile(r'PFMWPL,(\d{3}\.\d{4}),([NS]),(\d{3}\.\d{4}),([EW]),(\d+),([^,]*),([01])\Z')
@@ -116,9 +117,9 @@ class Flymaster(object):
 
     SUPPORTED_INSTRUMENTS = 'B1 B1NAV F1'.split()
 
-    def __init__(self, io):
+    def __init__(self, io, line=None):
         self.io = io
-        self._snp = None
+        self._snp = SNP(*PBRSNP_RE.match(line.decode('nmea_sentence')).groups()) if line else None
         self.buffer = ''
 
     def readline(self, timeout):

@@ -16,6 +16,7 @@
 
 
 from glob import glob
+import re
 import os
 
 from .errors import TimeoutError
@@ -63,13 +64,20 @@ class FlightRecorder(object):
             elif instrument in Sixty15.SUPPORTED_INSTRUMENTS:
                 return Sixty15(io)
             elif instrument is None:
-                for klass in Sixty15, Fifty20:
-                    try:
-                        flightrecorder = klass(io)
-                        flightrecorder.manufacturer_name
-                        return flightrecorder
-                    except TimeoutError:
-                        pass
-            else:
-                raise RuntimeError
-        raise RuntimeError
+                try:
+                    io.write('PBRSNP,'.encode('nmea_sentence'))
+                    line = io.read(0.2)
+                    while line.find('\x11' if line[0] == '\x13' else '\n') == -1:
+                        line += io.read()
+                    if re.match('\x13\$PBRSNP,[^,]*,[^,]*,[^,]*,[^,]*\*[0-9A-F]{2}\r\n\x11\Z', line):
+                        return Fifty20(io, line)
+                    if re.match('\$PBRSNP,[^,]*,[^,]*,[^,]*,[^,]*,[^,]*,[^,]*\*[0-9A-F]{2}\r\n\Z', line):
+                        return Flymaster(io, line)
+                except TimeoutError:
+                    io.write('ACT_BD_00\r\n')
+                    line = io.read(0.2)
+                    while line.find('\n') == -1:
+                        line += io.read()
+                    if re.match('(Brauniger IQ-Basic|Flytec 6015)\r\n\Z', line):
+                        return Sixty15(io, line)
+        raise RuntimeError # FIXME

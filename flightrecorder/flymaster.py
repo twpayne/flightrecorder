@@ -29,6 +29,7 @@ from .waypoint import Waypoint
 
 EPOCH = datetime(2000, 1, 1, 0, 0, 0)
 PBRSNP_RE = re.compile(r'PBRSNP,([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)\Z')
+PFMCFG_RE = re.compile(r'FMCFG,([A-Z]+):(.*)\Z')
 PFMDNL_LST_RE = re.compile(r'PFMLST,(\d+),(\d+),(\d+).(\d+).(\d+),(\d+):(\d+):(\d+),(\d+):(\d+):(\d+)\Z')
 PFMSNP_RE = re.compile(r'PFMSNP,([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)\Z')
 PFMWPL_RE = re.compile(r'PFMWPL,(\d{3}\.\d{4}),([NS]),(\d{3}\.\d{4}),([EW]),(\d+),([^,]*),([01])\Z')
@@ -186,6 +187,16 @@ class Flymaster(FlightRecorderBase):
     def one(self, command, re=None, timeout=1):
         for m in self.ieach(command, re, timeout=timeout):
             return m
+
+    def ipfmcfg(self):
+        try:
+            for m in self.ieach('PFMCFG,', PFMCFG_RE):
+                yield m.groups()
+        except TimeoutError:
+            pass # FIXME
+
+    def pfmcfg(self):
+        return dict(self.ipfmcfg())
 
     def pfmsnp(self):
         return SNP(*self.one('PFMSNP,', PFMSNP_RE).groups())

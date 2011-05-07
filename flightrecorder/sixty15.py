@@ -22,6 +22,7 @@ import logging
 import re
 import struct
 
+from .base import FlightRecorderBase
 from .common import Track, add_igc_filenames
 from .errors import ProtocolError, ReadError, TimeoutError, WriteError
 from .utc import UTC
@@ -209,9 +210,9 @@ class MockSixty15IO(object):
         raise NotImplementedError
 
 
-class Sixty15(object):
+class Sixty15(FlightRecorderBase):
 
-    SUPPORTED_INSTRUMENTS = '6015 IQ-BASIC'.split()
+    SUPPORTED_MODELS = '6015 IQ-BASIC'.split()
 
     def __init__(self, io, line=None):
         self.io = io
@@ -295,7 +296,7 @@ class Sixty15(object):
                     glider_id=fields[13].strip(),
                     _igc_lambda=igc_lambda(self, index)))
             line = self.readline(0.5)
-        return add_igc_filenames(tracks, self.manufacturer, self.serial_number)
+        return add_igc_filenames(tracks, self.manufacturer[:3].upper(), self.serial_number)
 
     def iact21(self, index):
         self.write('ACT_21_%02X\r\n' % index)
@@ -412,29 +413,8 @@ class Sixty15(object):
         else:
             raise ProtocolError('Unexpected response %r' % line)
 
-    def to_json(self):
-        return {
-            'manufacturer': self.manufacturer_name,
-            'model': self.model,
-            'pilot_name': self.pilot_name,
-            'serial_number': self.serial_number,
-            'software_version': self.software_version}
-
-    def dump(self):
-        fa = dict((key, self.rfa(key)) for key in FA_FORMAT.keys())
-        pa = dict((key, self.rpa(key)) for key in PA_FORMAT.keys())
-        tracks = list(track.to_json(True) for track in self.tracks())
-        waypoints = list(waypoint.to_json() for waypoint in self.waypoints())
-        return dict(fa=fa, pa=pa, tracks=tracks, waypoints=waypoints)
-
     @property
     def manufacturer(self):
-        if self._manufacturer is None:
-            self._manufacturer = self.rpa(PA_DeviceTyp)[0]
-        return self._manufacturer
-
-    @property
-    def manufacturer_name(self):
         if self._bd is None:
             self._bd = self.actbd()
         return self._bd.split()[0]
@@ -474,6 +454,8 @@ class Sixty15(object):
             raise NotImplementedError
         if first:
             self.act82()
+        if key == FA_Owner:
+            self._pilot_name = None
         self.wfa(FA_MAP[key], value)
 
     def tracks(self):
@@ -484,12 +466,19 @@ class Sixty15(object):
     def waypoints(self):
         return self.iact31()
 
-    def waypoints_delete(self, waypoint):
-        raise NotImplementedError
-
-    def waypoints_delete_all(self):
-        self.act30()
+    def waypoints_delete(self, waypoint=None):
+        if waypoint:
+            raise NotImplementedError
+        else:
+            self.act30()
 
     def waypoints_upload(self, waypoints):
         for waypoint in waypoints:
             self.act32(waypoint)
+
+    def to_json(self):
+        fa = dict((key, self.rfa(key)) for key in FA_FORMAT.keys())
+        pa = dict((key, self.rpa(key)) for key in PA_FORMAT.keys())
+        tracks = list(track.to_json(True) for track in self.tracks())
+        waypoints = list(waypoint.to_json() for waypoint in self.waypoints())
+        return dict(fa=fa, pa=pa, tracks=tracks, waypoints=waypoints)

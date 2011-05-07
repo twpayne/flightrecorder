@@ -40,15 +40,15 @@ DEVICE_GLOBS = {
 
 class FlightRecorder(object):
 
-    SUPPORTED_INSTRUMENTS = Fifty20.SUPPORTED_INSTRUMENTS + Flymaster.SUPPORTED_INSTRUMENTS + Sixty15.SUPPORTED_INSTRUMENTS
+    SUPPORTED_MODELS = Fifty20.SUPPORTED_MODELS + Flymaster.SUPPORTED_MODELS + Sixty15.SUPPORTED_MODELS
 
-    def __new__(self, device=None, instrument=None):
+    def __new__(self, device=None, model=None):
         if device:
             devices = (device,)
         else:
             device_globs = DEVICE_GLOBS.get(os.uname()[0], ())
             devices = list(filename for device_glob in device_globs for filename in sorted(glob(device_glob)))
-        if instrument is not None and instrument not in FlightRecorder.SUPPORTED_INSTRUMENTS:
+        if model is not None and model not in FlightRecorder.SUPPORTED_MODELS:
             raise RuntimeError # FIXME
         for device in devices:
             if device == 'mock-6015':
@@ -57,13 +57,13 @@ class FlightRecorder(object):
                 io = SerialIO(device)
             except IOError:
                 continue
-            if instrument in Fifty20.SUPPORTED_INSTRUMENTS:
+            if model in Fifty20.SUPPORTED_MODELS:
                 return Fifty20(io)
-            elif instrument in Flymaster.SUPPORTED_INSTRUMENTS:
+            elif model in Flymaster.SUPPORTED_MODELS:
                 return Flymaster(io)
-            elif instrument in Sixty15.SUPPORTED_INSTRUMENTS:
+            elif model in Sixty15.SUPPORTED_MODELS:
                 return Sixty15(io)
-            elif instrument is None:
+            elif model is None:
                 try:
                     io.write('PBRSNP,'.encode('nmea_sentence'))
                     line = io.read(0.2)

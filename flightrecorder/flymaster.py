@@ -20,6 +20,7 @@ import logging
 import re
 import struct
 
+from .base import FlightRecorderBase
 from .errors import ProtocolError, ReadError, TimeoutError, WriteError
 import nmea
 from .utc import UTC
@@ -51,10 +52,10 @@ class _Struct:
 
 class SNP(_Struct):
 
-    def __init__(self, instrument, _1, serial_number, firmware_version, _4, _5):
-        self.instrument = instrument
+    def __init__(self, model, _1, serial_number, software_version, _4, _5):
+        self.model = model
         self.serial_number = int(serial_number)
-        self.firmware_version = firmware_version
+        self.software_version = software_version
 
 
 class Tracklog(_Struct):
@@ -70,7 +71,7 @@ class FlightInformationRecord(_Struct):
 
     def __init__(self, data):
         fields = struct.unpack('<BBBBI8s15s15s15s', data[:61])
-        self.firmware_version = '%d.%02d' % (fields[0], fields[1])
+        self.software_version = '%d.%02d' % (fields[0], fields[1])
         self.hardware_version = '%d.%02d' % (fields[2], fields[3])
         self.serial_number = fields[4]
         self.competition_number = TRAILING_NULS_RE.sub('', fields[5])
@@ -113,9 +114,9 @@ class TrackPositionRecordDeltas(_Struct):
             i += 6
 
 
-class Flymaster(object):
+class Flymaster(FlightRecorderBase):
 
-    SUPPORTED_INSTRUMENTS = 'B1 B1NAV F1'.split()
+    SUPPORTED_MODELS = 'B1 B1NAV F1'.split()
 
     def __init__(self, io, line=None):
         self.io = io
@@ -257,16 +258,20 @@ class Flymaster(object):
             raise ProtocolError
 
     @property
-    def instrument(self):
-        if self._snp is None:
-            self._snp = self.pfmsnp()
-        return self._snp.instrument
+    def manufacturer(self):
+        return 'Flymaster'
 
     @property
-    def firmware_version(self):
+    def model(self):
         if self._snp is None:
             self._snp = self.pfmsnp()
-        return self._snp.firmware_version
+        return self._snp.model
+
+    @property
+    def software_version(self):
+        if self._snp is None:
+            self._snp = self.pfmsnp()
+        return self._snp.software_version
 
     @property
     def serial_number(self):
@@ -274,8 +279,9 @@ class Flymaster(object):
             self._snp = self.pfmsnp()
         return self._snp.serial_number
 
-    def to_json(self):
-        return dict(firmware_version=self.firmware_version, instrument=self.instrument, serial_number=self.serial_number)
+    @property
+    def pilot_name(self):
+        return None
 
     def waypoints(self):
         return self.pfmwpl()

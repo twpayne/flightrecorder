@@ -57,6 +57,6 @@ def add_igc_filenames(tracks, manufacturer, serial_number):
             index += 1
         else:
             index = 1
-        track.igc_filename = '%s-%s-%d-%02d.IGC' % (track.datetime.strftime('%Y-%m-%d'), ['FLY', 'BRA'][manufacturer], serial_number, index)
+        track.igc_filename = '%s-%s-%d-%02d.IGC' % (track.datetime.strftime('%Y-%m-%d'), manufacturer, serial_number, index)
         date = track.datetime.date()
     return tracks

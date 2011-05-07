@@ -20,6 +20,7 @@ import logging
 import re
 import struct
 
+from .base import FlightRecorderBase
 from .common import Track, add_igc_filenames
 from .errors import ProtocolError, ReadError, TimeoutError, WriteError
 import nmea
@@ -29,9 +30,9 @@ from .waypoint import Waypoint
 
 MANUFACTURER = {}
 for model in '5020 5030 6020 6030'.split():
-    MANUFACTURER[model] = 0
+    MANUFACTURER[model] = 'Flytec'
 for model in 'COMPEO COMPEO+ COMPETINO COMPETINO+ GALILEO'.split():
-    MANUFACTURER[model] = 1
+    MANUFACTURER[model] = 'Brauniger'
 
 MEMORY_MAP = {
         'glider_id': (224, '16s', str),
@@ -74,9 +75,9 @@ class SNP(object):
         self.software_version = software_version
 
 
-class Fifty20(object):
+class Fifty20(FlightRecorderBase):
 
-    SUPPORTED_INSTRUMENTS = '5020 5030 6020 6030 COMPEO COMPEO+ COMPETINO COMPETINO+ GALILEO'.split()
+    SUPPORTED_MODELS = '5020 5030 6020 6030 COMPEO COMPEO+ COMPETINO COMPETINO+ GALILEO'.split()
 
     def __init__(self, io, line=None):
         self.io = io
@@ -217,7 +218,7 @@ class Fifty20(object):
                 datetime=datetime.datetime(year + 2000, month, day, hour, minute, second, tzinfo=UTC()),
                 duration=datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds),
                 _igc_lambda=igc_lambda(self, index)))
-        return add_igc_filenames(tracks, self.manufacturer, self.serial_number)
+        return add_igc_filenames(tracks, self.manufacturer[:3].upper(), self.serial_number)
 
     def ipbrtr(self, index):
         return self.ieach('PBRTR,%02d' % index)
@@ -255,18 +256,6 @@ class Fifty20(object):
         else:
             self.none('PBRWPX,,', None)
 
-    def to_json(self):
-        return {
-            'manufacturer': self.manufacturer_name,
-            'model': self.model,
-            'pilot_name': self.pilot_name,
-            'serial_number': self.serial_number,
-            'software_version': self.software_version}
-
-    @property
-    def manufacturer_name(self):
-        return ['Flytec', 'Brauniger'][self.manufacturer]
-
     @property
     def manufacturer(self):
         return MANUFACTURER[self.snp.model]
@@ -276,22 +265,22 @@ class Fifty20(object):
         return self.snp.model
 
     @property
-    def pilot_name(self):
-        return self.snp.pilot_name
-
-    @property
     def serial_number(self):
         return self.snp.serial_number
+
+    @property
+    def software_version(self):
+        return self.snp.software_version
+
+    @property
+    def pilot_name(self):
+        return self.snp.pilot_name
 
     @property
     def snp(self):
         if self._snp is None:
             self._snp = self.pbrsnp()
         return self._snp
-
-    @property
-    def software_version(self):
-        return self.snp.software_version
 
     def get(self, key):
         if key not in MEMORY_MAP:
@@ -320,18 +309,15 @@ class Fifty20(object):
     def waypoints(self):
         return self.ipbrwps()
 
-    def waypoints_delete(self, waypoint):
-        self.pbrwpx(waypoint.name)
-
-    def waypoints_delete_all(self):
-        self.pbrwpx()
+    def waypoints_delete(self, waypoint=None):
+        self.pbrwpx(waypoint.name if waypoint else None)
 
     def waypoints_upload(self, waypoints):
         for waypoint in waypoints:
             self.pbrwpr(waypoint)
 
-    def dump(self):
+    def to_json(self):
         memory = self.pbrmemr(0, 256)
-        tracks = list(track.to_json(True) for track in self.tracks)
-        waypoints = list(waypoint.to_json() for waypoint in self.waypoints)
+        tracks = list(track.to_json(True) for track in self.tracks())
+        waypoints = list(waypoint.to_json() for waypoint in self.waypoints())
         return dict(memory=memory, tracks=tracks, waypoints=waypoints)

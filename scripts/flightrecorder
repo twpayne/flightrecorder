@@ -78,11 +78,11 @@ def abbreviator(items):
     return result
 
 
-def fr_dump(options, args):
+def fr_json(options, args):
     if args:
         raise UserError('extra arguments on command line %r' % args)
-    fr = FlightRecorder(options.device, options.instrument)
-    json.dump(fr.dump(), sys.stdout, indent=4, sort_keys=True)
+    fr = FlightRecorder(options.device, options.model)
+    json.dump(fr.to_json(), sys.stdout, indent=4, sort_keys=True)
     sys.stdout.write('\n')
 
 
@@ -91,16 +91,15 @@ def fr_get(options, args):
         raise UserError('missing argument')
     elif len(args) > 1:
         raise UserError('extra arguments on command line %r' % args[1:])
-    fr = FlightRecorder(options.device, options.instrument)
+    fr = FlightRecorder(options.device, options.model)
     print fr.get(args[0])
 
 
 def fr_id(options, args):
     if args:
         raise UserError('extra arguments on command line %r' % args)
-    fr = FlightRecorder(options.device, options.instrument)
-    json.dump(fr.to_json(), sys.stdout, indent=4, sort_keys=True)
-    sys.stdout.write('\n')
+    fr = FlightRecorder(options.device, options.model)
+    print '%s: found %s %s, serial number %s, software version %s (%s) on %s' % (options.basename, fr.manufacturer, fr.model, fr.serial_number, fr.software_version, fr.pilot_name, fr.io.filename)
 
 
 def fr_set(options, args):
@@ -108,13 +107,12 @@ def fr_set(options, args):
         raise UserError('missing argument(s)')
     elif len(args) > 2:
         raise UserError('extra arguments on command line %r' % args[1:])
-    fr = FlightRecorder(options.device, options.instrument)
+    fr = FlightRecorder(options.device, options.model)
     fr.set(args[0], args[1])
 
 
 def fr_tracks_download_helper(options, args, zf):
-    fr = FlightRecorder(options.device, options.instrument)
-    sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (options.basename, fr.manufacturer_name, fr.model, fr.serial_number, fr.pilot_name, fr.io.filename))
+    fr = FlightRecorder(options.device, options.model)
     count = 0
     range_sets = list(RangeSet(arg) for arg in args)
     for i, track in enumerate(fr.tracks()):
@@ -170,7 +168,8 @@ def fr_tracks_download(options, args):
 
 
 def fr_tracks_list(options, args):
-    json.dump(dict(tracks=[track.to_json() for track in FlightRecorder(options.device, options.instrument).tracks()]), sys.stdout, indent=4, sort_keys=True)
+    fr = FlightRecorder(options.device, options.model)
+    json.dump(dict(tracks=[track.to_json() for track in fr.tracks()]), sys.stdout, indent=4, sort_keys=True)
     sys.stdout.write('\n')
 
 
@@ -188,12 +187,12 @@ def fr_tracks_zip(options, args):
 
 
 def fr_waypoints_delete(options, args):
-    fr = FlightRecorder(options.device, options.instrument)
+    fr = FlightRecorder(options.device, options.model)
     if args:
         for arg in args:
             fr.waypoint_delete(Waypoint(name=arg))
     else:
-        fr.waypoints_delete_all()
+        fr.waypoints_delete()
 
 
 def fr_waypoints_download(options, args):
@@ -209,7 +208,8 @@ def fr_waypoints_download(options, args):
             raise UserError('unknown waypoint format %r' % options.format)
     else:
         format = 'oziexplorer'
-    waypoint.dump(FlightRecorder(options.device, options.instrument).waypoints(), output, format=format)
+    fr = FlightRecorder(options.device, options.model)
+    waypoint.dump(fr.waypoints(), output, format=format)
 
 
 def fr_waypoints_upload(options, args):
@@ -219,7 +219,8 @@ def fr_waypoints_upload(options, args):
         input = open(args[0])
     else:
         raise UserError('extra arguments on command line: %r' % args[1:])
-    FlightRecorder(options.device, options.instrument).waypoints_upload(waypoint.load(input))
+    fr = FlightRecorder(options.device, options.model)
+    fr.waypoints_upload(waypoint.load(input))
 
 
 def execute(options, args, commands):
@@ -243,7 +244,7 @@ def main(argv):
     parser.add_option('-d', '--device', metavar='DEVICE', help='set device filename')
     parser.add_option('-f', '--format', metavar='FORMAT', help='set output format')
     parser.add_option('-o', '--overwrite', action='store_true', help='re-download already downloaded tracklogs')
-    parser.add_option('-i', '--instrument', metavar='TYPE', type='choice', choices=FlightRecorder.SUPPORTED_INSTRUMENTS, help='set device type')
+    parser.add_option('-m', '--model', metavar='TYPE', type='choice', choices=FlightRecorder.SUPPORTED_MODELS, help='set device type')
     parser.add_option('-v', '--verbose', action='count', dest='level', help='show debugging information')
     parser.set_defaults(level=0)
     options, args = parser.parse_args(argv[1:])
@@ -252,9 +253,9 @@ def main(argv):
     try:
         execute(options, args, {
                 None: fr_tracks_download,
-                'dump': fr_dump,
                 'get': fr_get,
                 'id': fr_id,
+                'json': fr_json,
                 'set': fr_set,
                 'tracks': {
                     None: fr_tracks_download,

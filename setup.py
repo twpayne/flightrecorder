@@ -10,4 +10,4 @@ setup(
         author_email='twpayne@gmail.com',
         url='https://github.com/twpayne/flightrecorder',
         packages=['flightrecorder'],
-        scripts=['scripts/flightrecorder', 'scripts/flightrecorder-gui'])
+        scripts=['scripts/flightrecorder'])

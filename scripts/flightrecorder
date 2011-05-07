@@ -78,42 +78,46 @@ def abbreviator(items):
     return result
 
 
-def flightrecorder_dump(options, args):
+def fr_dump(options, args):
     if args:
         raise UserError('extra arguments on command line %r' % args)
-    json.dump(FlightRecorder(options.device, options.instrument).dump(), sys.stdout, indent=4, sort_keys=True)
+    fr = FlightRecorder(options.device, options.instrument)
+    json.dump(fr.dump(), sys.stdout, indent=4, sort_keys=True)
     sys.stdout.write('\n')
 
 
-def flightrecorder_get(options, args):
+def fr_get(options, args):
     if not args:
         raise UserError('missing argument')
     elif len(args) > 1:
         raise UserError('extra arguments on command line %r' % args[1:])
-    print FlightRecorder(options.device, options.instrument).get(args[0])
+    fr = FlightRecorder(options.device, options.instrument)
+    print fr.get(args[0])
 
 
-def flightrecorder_id(options, args):
+def fr_id(options, args):
     if args:
         raise UserError('extra arguments on command line %r' % args)
-    json.dump(FlightRecorder(options.device, options.instrument).to_json(), sys.stdout, indent=4, sort_keys=True)
+    fr = FlightRecorder(options.device, options.instrument)
+    json.dump(fr.to_json(), sys.stdout, indent=4, sort_keys=True)
     sys.stdout.write('\n')
 
 
-def flightrecorder_set(options, args):
+def fr_set(options, args):
     if len(args) < 2:
         raise UserError('missing argument(s)')
     elif len(args) > 2:
         raise UserError('extra arguments on command line %r' % args[1:])
-    FlightRecorder(options.device, options.instrument).set(args[0], args[1])
+    fr = FlightRecorder(options.device, options.instrument)
+    fr.set(args[0], args[1])
 
 
-def flightrecorder_tracks_download_helper(options, args, zf):
-    flightrecorder = FlightRecorder(options.device, options.instrument)
-    sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (options.basename, flightrecorder.manufacturer_name, flightrecorder.model, flightrecorder.serial_number, flightrecorder.pilot_name, flightrecorder.io.filename))
+def fr_tracks_download_helper(options, args, zf):
+    fr = FlightRecorder(options.device, options.instrument)
+    sys.stdout.write('%s: found %s %s #%d (%s) on %s\n' % (options.basename, fr.manufacturer_name, fr.model, fr.serial_number, fr.pilot_name, fr.io.filename))
     count = 0
     range_sets = list(RangeSet(arg) for arg in args)
-    for i, track in enumerate(flightrecorder.tracks()):
+    for i, track in enumerate(fr.tracks()):
         if range_sets and not any(i + 1 in rs for rs in range_sets):
             continue
         if zf is None and os.path.exists(track.igc_filename) and not options.overwrite:
@@ -158,24 +162,24 @@ def flightrecorder_tracks_download_helper(options, args, zf):
     sys.stdout.write('%s: %d tracklogs downloaded\n' % (options.basename, count))
 
 
-def flightrecorder_tracks_download(options, args):
-    for track in flightrecorder_tracks_download_helper(options, args, None):
+def fr_tracks_download(options, args):
+    for track in fr_tracks_download_helper(options, args, None):
         with open(track.igc_filename, 'w') as output:
             for line in track.igc:
                 output.write(line)
 
 
-def flightrecorder_tracks_list(options, args):
+def fr_tracks_list(options, args):
     json.dump(dict(tracks=[track.to_json() for track in FlightRecorder(options.device, options.instrument).tracks()]), sys.stdout, indent=4, sort_keys=True)
     sys.stdout.write('\n')
 
 
-def flightrecorder_tracks_zip(options, args):
+def fr_tracks_zip(options, args):
     filename = 'tracks.zip'
     if args and re.search(r'\.zip\Z', args[0], re.I):
         filename, args = args[0], args[1:]
     zf = zipfile.ZipFile(filename, 'w')
-    for track in flightrecorder_tracks_download_helper(options, args, zf):
+    for track in fr_tracks_download_helper(options, args, zf):
         zi = zipfile.ZipInfo(track.igc_filename)
         zi.date_time = (track.datetime + track.duration).timetuple()[:6]
         zi.external_attr = 0644 << 16
@@ -183,16 +187,16 @@ def flightrecorder_tracks_zip(options, args):
     zf.close()
 
 
-def flightrecorder_waypoints_delete(options, args):
-    flightrecorder = FlightRecorder(options.device, options.instrument)
+def fr_waypoints_delete(options, args):
+    fr = FlightRecorder(options.device, options.instrument)
     if args:
         for arg in args:
-            flightrecorder.waypoint_delete(Waypoint(name=arg))
+            fr.waypoint_delete(Waypoint(name=arg))
     else:
-        flightrecorder.waypoints_delete_all()
+        fr.waypoints_delete_all()
 
 
-def flightrecorder_waypoints_download(options, args):
+def fr_waypoints_download(options, args):
     if not args:
         output = sys.stdout
     elif len(args) == 1:
@@ -208,7 +212,7 @@ def flightrecorder_waypoints_download(options, args):
     waypoint.dump(FlightRecorder(options.device, options.instrument).waypoints(), output, format=format)
 
 
-def flightrecorder_waypoints_upload(options, args):
+def fr_waypoints_upload(options, args):
     if not args:
         input = sys.stdin
     elif len(args) == 1:
@@ -247,21 +251,21 @@ def main(argv):
     logging.basicConfig(level=logging.WARN - 10 * options.level)
     try:
         execute(options, args, {
-                None: flightrecorder_tracks_download,
-                'dump': flightrecorder_dump,
-                'get': flightrecorder_get,
-                'id': flightrecorder_id,
-                'set': flightrecorder_set,
+                None: fr_tracks_download,
+                'dump': fr_dump,
+                'get': fr_get,
+                'id': fr_id,
+                'set': fr_set,
                 'tracks': {
-                    None: flightrecorder_tracks_download,
-                    'download': flightrecorder_tracks_download,
-                    'list': flightrecorder_tracks_list,
-                    'zip': flightrecorder_tracks_zip},
+                    None: fr_tracks_download,
+                    'download': fr_tracks_download,
+                    'list': fr_tracks_list,
+                    'zip': fr_tracks_zip},
                 'waypoints': {
-                    None: flightrecorder_waypoints_download,
-                    'delete': flightrecorder_waypoints_delete,
-                    'download': flightrecorder_waypoints_download,
-                    'upload': flightrecorder_waypoints_upload}})
+                    None: fr_waypoints_download,
+                    'delete': fr_waypoints_delete,
+                    'download': fr_waypoints_download,
+                    'upload': fr_waypoints_upload}})
     except UserError, e:
         sys.stdout.write('%s: %s\n' % (options.basename, e.message))
         return 1

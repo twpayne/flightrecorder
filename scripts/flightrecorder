@@ -144,7 +144,7 @@ def fr_tracks_download_helper(options, args, zf):
             if here == track.datetime or now - start < 2:
                 remaining = None
             else:
-                remaining = (now - start) * max((track.datetime + track.duration - here).seconds, 0) / (here - track.datetime).seconds
+                remaining = math.ceil((now - start) * max((track.datetime + track.duration - here).seconds, 0) / (here - track.datetime).seconds)
                 remaining = max(remaining, 0)
                 if prev_remaining is not None:
                     remaining = min(remaining, prev_remaining)

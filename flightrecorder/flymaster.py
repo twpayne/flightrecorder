@@ -109,7 +109,7 @@ class TrackPositionRecordDeltas(_Struct):
 
 class Flymaster(FlightRecorderBase):
 
-    SUPPORTED_MODELS = 'B1 B1NAV F1'.split()
+    SUPPORTED_MODELS = 'B1NAV'.split()
 
     def __init__(self, io, line=None):
         self.io = io

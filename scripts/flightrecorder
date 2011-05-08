@@ -204,8 +204,16 @@ def fr_waypoints_delete(options, args):
             pass
         waypoints = list(fr.waypoints())
         while waypoints:
-            for w in waypoints:
+            start = time.time()
+            sys.stderr.write('%s: deleting waypoints    0%%  --:--' % options.basename)
+            for i, w in enumerate(waypoints):
                 fr.waypoint_delete(w.device_name)
+                now = time.time()
+                minutes, seconds = divmod(ceil((len(waypoints) - i - 1) * (now - start) / (i + 1)), 60)
+                sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b%3d%%  %02d:%02d' % (100 * (i + 1) / len(waypoints), minutes, seconds))
+            duration = time.time() - start
+            sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
+            sys.stderr.write('%s: %d waypoints deleted\n' % (options.basename, len(waypoints)))
             waypoints = list(fr.waypoints())
 
 

@@ -21,6 +21,7 @@ import datetime
 from glob import glob
 import json
 import logging
+import math
 from optparse import OptionParser
 import os
 import os.path
@@ -221,8 +222,18 @@ def fr_waypoints_upload(options, args):
     else:
         raise UserError('extra arguments on command line: %r' % args[1:])
     fr = FlightRecorder(options.device, options.model)
-    for waypoint in waypoint.load(input):
-        fr.waypoint_upload(waypoint)
+    waypoints = waypoint.load(input)
+    start = time.time()
+    sys.stdout.write('%s: uploading waypoints    0%%  --:--' % options.basename)
+    for i, w in enumerate(waypoints):
+        fr.waypoint_upload(w)
+        now = time.time()
+        minutes, seconds = divmod(math.ceil((len(waypoints) - i - 1) * (now - start) / (i + 1)), 60)
+        sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b%3d%%  %02d:%02d' % (100 * (i + 1) / len(waypoints), minutes, seconds))
+        sys.stdout.flush()
+    duration = time.time() - start
+    sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
+    sys.stdout.write('%s: %d waypoints uploaded\n' % (options.basename, len(waypoints)))
 
 
 def execute(options, args, commands):

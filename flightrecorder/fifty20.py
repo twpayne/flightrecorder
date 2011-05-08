@@ -260,7 +260,10 @@ class Fifty20(FlightRecorderBase):
         if name:
             self.none('PBRWPX,%-17s' % name)
         else:
-            self.none('PBRWPX,,', None)
+            # PBRWPX,, is officially documented but very slow and very buggy
+            # so, instead, pretend that the command is not available
+            #self.none('PBRWPX,,', None)
+            raise NotAvailableError
 
     @property
     def manufacturer(self):

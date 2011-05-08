@@ -207,7 +207,7 @@ def fr_waypoints_download(options, args):
         if format is None:
             raise UserError('unknown waypoint format %r' % options.format)
     else:
-        format = 'oziexplorer'
+        format = 'formatgeo'
     fr = FlightRecorder(options.device, options.model)
     waypoint.dump(fr.waypoints(), output, format=format)
 

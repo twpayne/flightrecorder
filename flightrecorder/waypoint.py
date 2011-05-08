@@ -33,7 +33,7 @@ class Waypoint(object):
         return self.__dict__.copy()
 
 
-def dump(waypoints, file, format='oziexplorer'):
+def dump(waypoints, file, format='formatgeo'):
     if format == 'compegps':
         file.write(u'G  WGS 84\r\n')
         file.write(u'U  1\r\n')

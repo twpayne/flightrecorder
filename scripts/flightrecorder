@@ -121,9 +121,9 @@ def fr_tracks_download_helper(options, args, zf):
         if range_sets and not any(i + 1 in rs for rs in range_sets):
             continue
         if zf is None and os.path.exists(track.igc_filename) and not options.overwrite:
-            sys.stdout.write('%s: skipping %s\n' % (options.basename, track.igc_filename))
+            sys.stderr.write('%s: skipping %s\n' % (options.basename, track.igc_filename))
             continue
-        sys.stdout.write('%s: downloading %s    0%%  --:--' % (options.basename, track.igc_filename))
+        sys.stderr.write('%s: downloading %s    0%%  --:--' % (options.basename, track.igc_filename))
         here = track.datetime
         percentage, remaining = 0, None
         start = time.time()
@@ -149,17 +149,16 @@ def fr_tracks_download_helper(options, args, zf):
                 if prev_remaining is not None:
                     remaining = min(remaining, prev_remaining)
             if percentage != prev_percentage or remaining != prev_remaining:
-                sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b%3d%%  ' % percentage)
+                sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b%3d%%  ' % percentage)
                 if remaining is None:
-                    sys.stdout.write('--:--')
+                    sys.stderr.write('--:--')
                 else:
-                    sys.stdout.write('%02d:%02d' % divmod(remaining, 60))
-                sys.stdout.flush()
+                    sys.stderr.write('%02d:%02d' % divmod(remaining, 60))
         duration = time.time() - start
-        sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
+        sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
         count += 1
         yield track
-    sys.stdout.write('%s: %d tracklogs downloaded\n' % (options.basename, count))
+    sys.stderr.write('%s: %d tracklogs downloaded\n' % (options.basename, count))
 
 
 def fr_tracks_download(options, args):
@@ -224,16 +223,15 @@ def fr_waypoints_upload(options, args):
     fr = FlightRecorder(options.device, options.model)
     waypoints = waypoint.load(input)
     start = time.time()
-    sys.stdout.write('%s: uploading waypoints    0%%  --:--' % options.basename)
+    sys.stderr.write('%s: uploading waypoints    0%%  --:--' % options.basename)
     for i, w in enumerate(waypoints):
         fr.waypoint_upload(w)
         now = time.time()
         minutes, seconds = divmod(math.ceil((len(waypoints) - i - 1) * (now - start) / (i + 1)), 60)
-        sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b%3d%%  %02d:%02d' % (100 * (i + 1) / len(waypoints), minutes, seconds))
-        sys.stdout.flush()
+        sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b%3d%%  %02d:%02d' % (100 * (i + 1) / len(waypoints), minutes, seconds))
     duration = time.time() - start
-    sys.stdout.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
-    sys.stdout.write('%s: %d waypoints uploaded\n' % (options.basename, len(waypoints)))
+    sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
+    sys.stderr.write('%s: %d waypoints uploaded\n' % (options.basename, len(waypoints)))
 
 
 def execute(options, args, commands):

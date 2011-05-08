@@ -312,12 +312,11 @@ class Fifty20(FlightRecorderBase):
     def waypoints(self):
         return self.ipbrwps()
 
-    def waypoints_delete(self, waypoint=None):
-        self.pbrwpx(waypoint.name if waypoint else None)
+    def waypoint_delete(self, name=None):
+        self.pbrwpx(name)
 
-    def waypoints_upload(self, waypoints):
-        for waypoint in waypoints:
-            self.pbrwpr(waypoint)
+    def waypoint_upload(self, waypoint):
+        self.pbrwpr(waypoint)
 
     def to_json(self):
         memory = self.pbrmemr(0, 256)

@@ -296,9 +296,8 @@ class Flymaster(FlightRecorderBase):
     def waypoints(self):
         return self.pfmwpl()
 
-    def waypoints_upload(self, waypoints):
-        for waypoint in waypoints:
-            self.pfmwpr(waypoint)
+    def waypoint_upload(self, waypoint):
+        self.pfmwpr(waypoint)
 
     def to_json(self):
         tracks = list(track.to_json() for track in self.tracks())

@@ -191,9 +191,9 @@ def fr_waypoints_delete(options, args):
     fr = FlightRecorder(options.device, options.model)
     if args:
         for arg in args:
-            fr.waypoint_delete(Waypoint(name=arg))
+            fr.waypoint_delete(arg)
     else:
-        fr.waypoints_delete()
+        fr.waypoint_delete()
 
 
 def fr_waypoints_download(options, args):
@@ -221,7 +221,8 @@ def fr_waypoints_upload(options, args):
     else:
         raise UserError('extra arguments on command line: %r' % args[1:])
     fr = FlightRecorder(options.device, options.model)
-    fr.waypoints_upload(waypoint.load(input))
+    for waypoint in waypoint.load(input):
+        fr.waypoint_upload(waypoint)
 
 
 def execute(options, args, commands):

@@ -353,15 +353,14 @@ class Sixty15(FlightRecorderBase):
     def waypoints(self):
         return self.iact31()
 
-    def waypoints_delete(self, waypoint=None):
-        if waypoint:
+    def waypoint_delete(self, name=None):
+        if name:
             raise NotAvailableError
         else:
             self.act30()
 
-    def waypoints_upload(self, waypoints):
-        for waypoint in waypoints:
-            self.act32(waypoint)
+    def waypoint_upload(self, waypoint):
+        self.act32(waypoint)
 
     def to_json(self):
         fa = dict((key, self.rfa(key)) for key in FA_FORMAT.keys())

@@ -62,7 +62,7 @@ class NMEASentenceCodec(Codec):
 class NMEACharacterCodec(object):
 
     def decode(self, input, errors='strict'):
-        return unicode(input)
+        return (unicode(input), len(input))
 
     def encode(self, input, errors='strict'):
         if errors == 'replace':
@@ -70,6 +70,7 @@ class NMEACharacterCodec(object):
         elif errors == 'strict':
             if NMEA_INVALID_CHAR_RE.search(input):
                 raise UnicodeError
+            return (input, len(input))
         else:
             raise NotImplementedError
 

@@ -182,6 +182,9 @@ class Flymaster(FlightRecorderBase):
         for m in self.ieach(command, re, timeout=timeout):
             return m
 
+    def pfmids(self, civl_id=None, competition_id=None, pilot_name=None):
+        self.none('PFMIDS,%s,%s,%s' % tuple(x[:w].ljust(w) if x else '' for x, w in ((civl_id, 7), (competition_id, 7), (pilot_name, 15))))
+
     def ipfmcfg(self):
         try:
             for m in self.ieach('PFMCFG,', PFMCFG_RE):
@@ -225,9 +228,6 @@ class Flymaster(FlightRecorderBase):
                 break
             else:
                 logging.info('unknown packet type %04X' % packet.id)
-
-    def pfmplt(self, pilot_name, competition_number, glider_brand, glider_model):
-        self.none('PFMPLT,%s,%s,%s,%s,' % (pilot_name, competition_number, glider_brand, glider_model))
 
     def ipfmwpl(self):
         try:
@@ -289,6 +289,12 @@ class Flymaster(FlightRecorderBase):
     @property
     def pilot_name(self):
         return None
+
+    def set(self, key, value, first=True, last=True):
+        if key in ('civl_id', 'competition_id', 'pilot_name'):
+            self.pfmids(**{key: value})
+        else:
+            raise NotAvailableError
 
     def tracks(self):
         if self._pfmdnl_lst is None:

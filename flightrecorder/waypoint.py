@@ -49,7 +49,7 @@ class Waypoint(object):
                     airfield3 = True
         for n in (name3, name):
             if n is not None:
-                self.name = n
+                self.name = n.rstrip()
                 break
         else:
             self.name = ''
@@ -75,6 +75,7 @@ class Waypoint(object):
             self.airfield = False
         self.color = color
         self.radius = radius
+        self.device_name = name
 
     def get_id(self):
         if re.match('[A-Z]\d{2}\Z', self.id):

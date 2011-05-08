@@ -85,6 +85,7 @@ class Fifty20(FlightRecorderBase):
         self._snp = SNP(*PBRSNP_RE.match(line[1:-1].decode('nmea_sentence')).groups()) if line else None
         self._tracks = None
         self._waypoints = None
+        self.waypoint_precision = 1
 
     def readline(self, timeout=1):
         if self.buffer == '':
@@ -227,15 +228,17 @@ class Fifty20(FlightRecorderBase):
         return list(self.ipbrtr(index))
 
     def pbrwpr(self, waypoint):
-        self.none('PBRWPR,%02d%06.3f,%s,%03d%06.3f,%s,,%-17s,%04d' % (
+        name = waypoint.get_id_name().encode('nmea_characters')[:17].ljust(17)
+        self.none('PBRWPR,%02d%06.3f,%s,%03d%06.3f,%s,,%s,%04d' % (
             abs(60 * waypoint.lat) / 60,
             abs(60 * waypoint.lat) % 60,
             'S' if waypoint.lat < 0 else 'N',
             abs(60 * waypoint.lon) / 60,
             abs(60 * waypoint.lon) % 60,
             'W' if waypoint.lon < 0 else 'E',
-            waypoint.get_id_name().encode('nmea_characters')[:17],
+            name,
             waypoint.alt or 0))
+        return name
 
     def ipbrwps(self):
         for m in self.ieach('PBRWPS,', PBRWPS_RE):
@@ -245,8 +248,8 @@ class Fifty20(FlightRecorderBase):
             lon = int(m.group(4)) + float(m.group(5)) / 60
             if m.group(6) == 'W':
                 lon *= -1
-            id = m.group(7).rstrip()
-            name = m.group(8).rstrip()
+            id = m.group(7)
+            name = m.group(8)
             alt = int(m.group(9))
             yield Waypoint(name, lat, lon, alt, id=id)
 
@@ -316,7 +319,7 @@ class Fifty20(FlightRecorderBase):
         self.pbrwpx(name)
 
     def waypoint_upload(self, waypoint):
-        self.pbrwpr(waypoint)
+        return self.pbrwpr(waypoint)
 
     def to_json(self):
         memory = self.pbrmemr(0, 256)

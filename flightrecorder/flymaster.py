@@ -116,6 +116,7 @@ class Flymaster(FlightRecorderBase):
         self._snp = SNP(*PBRSNP_RE.match(line.decode('nmea_sentence')).groups()) if line else None
         self._pfmdnl_lst = None
         self.buffer = ''
+        self.waypoint_precision = 15
 
     def readline(self, timeout):
         result = ''
@@ -238,7 +239,7 @@ class Flymaster(FlightRecorderBase):
                 if m.group(4) == 'W':
                     lon = -lon
                 alt = int(m.group(5))
-                name = m.group(6).rstrip()
+                name = m.group(6)
                 airfield = bool(int(m.group(7)))
                 yield Waypoint(name, lat, lon, alt, airfield=airfield)
         except TimeoutError:
@@ -261,6 +262,7 @@ class Flymaster(FlightRecorderBase):
             waypoint.airfield), PFMWPR_RE)
         if name != m.group(1):
             raise ProtocolError
+        return name
 
     @property
     def manufacturer(self):
@@ -297,7 +299,7 @@ class Flymaster(FlightRecorderBase):
         return self.pfmwpl()
 
     def waypoint_upload(self, waypoint):
-        self.pfmwpr(waypoint)
+        return self.pfmwpr(waypoint)
 
     def to_json(self):
         tracks = list(track.to_json() for track in self.tracks())

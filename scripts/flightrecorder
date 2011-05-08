@@ -21,7 +21,7 @@ import datetime
 from glob import glob
 import json
 import logging
-import math
+from math import acos, ceil, cos, pi, sin
 from optparse import OptionParser
 import os
 import os.path
@@ -78,6 +78,11 @@ def abbreviator(items):
             else:
                 result[key] = item
     return result
+
+
+def distance_between(w1, w2):
+    d = sin(pi * w1.lat / 180.0) * sin(pi * w2.lat / 180.0) + cos(pi * w1.lat / 180.0) * cos(pi * w2.lat / 180.0) * cos(pi * (w1.lon - w2.lon) / 180.0)
+    return 6371000.0 * acos(d) if d < 1.0 else 0.0
 
 
 def fr_json(options, args):
@@ -144,7 +149,7 @@ def fr_tracks_download_helper(options, args, zf):
             if here == track.datetime or now - start < 2:
                 remaining = None
             else:
-                remaining = math.ceil((now - start) * max((track.datetime + track.duration - here).seconds, 0) / (here - track.datetime).seconds)
+                remaining = ceil((now - start) * max((track.datetime + track.duration - here).seconds, 0) / (here - track.datetime).seconds)
                 remaining = max(remaining, 0)
                 if prev_remaining is not None:
                     remaining = min(remaining, prev_remaining)
@@ -222,16 +227,38 @@ def fr_waypoints_upload(options, args):
         raise UserError('extra arguments on command line: %r' % args[1:])
     fr = FlightRecorder(options.device, options.model)
     waypoints = waypoint.load(input)
-    start = time.time()
-    sys.stderr.write('%s: uploading waypoints    0%%  --:--' % options.basename)
-    for i, w in enumerate(waypoints):
-        fr.waypoint_upload(w)
-        now = time.time()
-        minutes, seconds = divmod(math.ceil((len(waypoints) - i - 1) * (now - start) / (i + 1)), 60)
-        sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b%3d%%  %02d:%02d' % (100 * (i + 1) / len(waypoints), minutes, seconds))
-    duration = time.time() - start
-    sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
-    sys.stderr.write('%s: %d waypoints uploaded\n' % (options.basename, len(waypoints)))
+    while waypoints:
+        file_waypoints = {}
+        start = time.time()
+        sys.stderr.write('%s: uploading waypoints    0%%  --:--' % options.basename)
+        for i, w in enumerate(waypoints):
+            file_waypoints[fr.waypoint_upload(w)] = w
+            now = time.time()
+            minutes, seconds = divmod(ceil((len(waypoints) - i - 1) * (now - start) / (i + 1)), 60)
+            sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b%3d%%  %02d:%02d' % (100 * (i + 1) / len(waypoints), minutes, seconds))
+        duration = time.time() - start
+        sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
+        sys.stderr.write('%s: %d waypoints uploaded\n' % (options.basename, len(waypoints)))
+        sys.stderr.write('%s: verifying...' % options.basename)
+        device_waypoints = dict((w.device_name, w) for w in fr.waypoints())
+        missing, inaccurate, horizontal_errors = [], [], []
+        for device_name, file_waypoint in file_waypoints.items():
+            if device_name not in device_waypoints:
+                missing.append(file_waypoint)
+                continue
+            device_waypoint = device_waypoints[device_name]
+            horizontal_error = distance_between(file_waypoint, device_waypoint)
+            horizontal_errors.append(horizontal_error)
+            if horizontal_error > fr.waypoint_precision or device_waypoint.alt != int(file_waypoint.alt):
+                inaccurate.append(file_waypoint)
+                continue
+        sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b\b%d waypoints verified' % (len(file_waypoints) - len(missing) - len(inaccurate)))
+        if missing:
+            sys.stderr.write(', %d missing' % len(missing))
+        if inaccurate:
+            sys.stderr.write(', %d innacurate' % len(inaccurate))
+        sys.stderr.write(', maximum error %.1fm\n' % max(horizontal_errors))
+        waypoints = missing
 
 
 def execute(options, args, commands):

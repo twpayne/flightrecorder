@@ -109,6 +109,7 @@ class Sixty15(FlightRecorderBase):
         self._pilot_name = None
         self._tracks = None
         self._waypoints = None
+        self.waypoint_precision = 1
 
     def readline(self, timeout=1):
         while True:
@@ -216,7 +217,7 @@ class Sixty15(FlightRecorderBase):
                 break
             m = re.match(r'\A(.*?);([NS])\s+(\d+)\'(\d+\.\d+);([EW])\s+(\d+)\'(\d+\.\d+);\s*(\d+);\s*(\d+)\r\n', line)
             if m:
-                name = m.group(1).rstrip()
+                name = m.group(1)
                 lat = int(m.group(3)) + float(m.group(4)) / 60.0
                 if m.group(2) == 'S':
                     lat = -lat
@@ -235,25 +236,26 @@ class Sixty15(FlightRecorderBase):
 
     def act32(self, waypoint):
         self.write('ACT_32_00\r\n')
+        name = INVALID_CHARS_RE.sub('', waypoint.get_id_name())[:16].ljust(16)
         lat_hemi = 'N' if waypoint.lat > 0 else 'S'
         lat_deg, lat_min = divmod(abs(60 * waypoint.lat), 60)
         lon_hemi = 'E' if waypoint.lon > 0 else 'W'
         lon_deg, lon_min = divmod(abs(60 * waypoint.lon), 60)
-        self.write('%-16s;%s  %2d\'%6.3f;%s %3d\'%6.3f;%6d;%6d\r\n' % (
-            INVALID_CHARS_RE.sub('', waypoint.get_id_name())[:16],
+        self.write('%s;%s  %2d\'%6.3f;%s %3d\'%6.3f;%6d;%6d\r\n' % (
+            name,
             lat_hemi, lat_deg, lat_min,
             lon_hemi, lon_deg, lon_min,
             waypoint.alt or 0,
             waypoint.radius or 400))
         line = self.readline()
         if line == ' Done\r\n':
-            pass
+            return name
         elif line == 'full list\r\n':
             raise RuntimeError # FIXME
         elif line == 'Syntax Error\r\n':
             raise ProtocolError('syntax error')
         elif line == 'already exist\r\n':
-            raise RuntimeError # FIXME
+            return name
 
     def act82(self):
         self.write('ACT_82_00\r\n')
@@ -360,7 +362,7 @@ class Sixty15(FlightRecorderBase):
             self.act30()
 
     def waypoint_upload(self, waypoint):
-        self.act32(waypoint)
+        return self.act32(waypoint)
 
     def to_json(self):
         fa = dict((key, self.rfa(key)) for key in FA_FORMAT.keys())

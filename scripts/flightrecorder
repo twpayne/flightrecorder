@@ -30,6 +30,7 @@ import time
 import zipfile
 
 from flightrecorder import FlightRecorder
+from flightrecorder.errors import NotAvailableError
 from flightrecorder.utc import UTC
 from flightrecorder.waypoint import Waypoint
 import flightrecorder.waypoint as waypoint
@@ -270,7 +271,7 @@ def main(argv):
     except UserError, e:
         sys.stdout.write('%s: %s\n' % (options.basename, e.message))
         return 1
-    except NotImplementedError:
+    except NotAvailableError:
         sys.stdout.write('%s: command not available on this device\n' % options.basename)
         return 1
 

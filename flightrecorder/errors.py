@@ -22,6 +22,10 @@ class Error(RuntimeError):
         self.message = message
 
 
+class NotAvailableError(Error):
+    pass
+
+
 class TimeoutError(Error):
     pass
 

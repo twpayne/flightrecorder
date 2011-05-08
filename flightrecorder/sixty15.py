@@ -24,7 +24,7 @@ import struct
 
 from .base import FlightRecorderBase
 from .common import Track, add_igc_filenames
-from .errors import ProtocolError, ReadError, TimeoutError, WriteError
+from .errors import NotAvailableError, ProtocolError, ReadError, TimeoutError, WriteError
 from .utc import UTC
 from .waypoint import Waypoint
 
@@ -333,12 +333,12 @@ class Sixty15(FlightRecorderBase):
 
     def get(self, key):
         if not key in FA_MAP:
-            raise NotImplementedError
+            raise NotAvailableError
         return self.rfa(FA_MAP[key])[0]
 
     def set(self, key, value, first=True, last=True):
         if not key in FA_MAP:
-            raise NotImplementedError
+            raise NotAvailableError
         if first:
             self.act82()
         if key == FA_Owner:
@@ -355,7 +355,7 @@ class Sixty15(FlightRecorderBase):
 
     def waypoints_delete(self, waypoint=None):
         if waypoint:
-            raise NotImplementedError
+            raise NotAvailableError
         else:
             self.act30()
 

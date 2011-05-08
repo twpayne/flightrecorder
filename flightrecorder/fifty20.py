@@ -22,7 +22,7 @@ import struct
 
 from .base import FlightRecorderBase
 from .common import Track, add_igc_filenames
-from .errors import ProtocolError, ReadError, TimeoutError, WriteError
+from .errors import NotAvailableError, ProtocolError, ReadError, TimeoutError, WriteError
 import nmea
 from .utc import UTC
 from .waypoint import Waypoint
@@ -287,14 +287,14 @@ class Fifty20(FlightRecorderBase):
 
     def get(self, key):
         if key not in MEMORY_MAP:
-            raise NotImplementedError
+            raise NotAvailableError
         address, format, type = MEMORY_MAP[key]
         value = ''.join(chr(byte) for byte in self.pbrmemr(address, struct.calcsize(format)))
         return struct.unpack(format, value)[0]
 
     def set(self, key, value, first=True, last=True):
         if key not in MEMORY_MAP:
-            raise NotImplementedError
+            raise NotAvailableError
         address, format, type = MEMORY_MAP[key]
         m = re.match(r'(\d+)s\Z', format)
         if m:

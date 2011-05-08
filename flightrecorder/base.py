@@ -15,45 +15,48 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from .errors import NotAvailableError
+
+
 class FlightRecorderBase(object):
 
     @property
     def manufacturer(self):
-        raise NotImplementedError
+        raise NotAvailableError
 
     @property
     def model(self):
-        raise NotImplementedError
+        raise NotAvailableError
 
     @property
     def serial_number(self):
-        raise NotImplementedError
+        raise NotAvailableError
 
     @property
     def software_version(self):
-        raise NotImplementedError
+        raise NotAvailableError
 
     @property
     def pilot_name(self):
-        raise NotImplementedError
+        raise NotAvailableError
 
     def get(self, key):
-        raise NotImplementedError
+        raise NotAvailableError
 
     def set(self, key, value, first=True, last=True):
-        raise NotImplementedError
+        raise NotAvailableError
 
     def tracks(self):
-        raise NotImplementedError
+        raise NotAvailableError
 
     def waypoints(self):
-        raise NotImplementedError
+        raise NotAvailableError
 
-    def waypoints_delete(self, name=None):
-        raise NotImplementedError
+    def waypoint_delete(self, name=None):
+        raise NotAvailableError
 
-    def waypoints_upload(self, waypoints):
-        raise NotImplementedError
+    def waypoint_upload(self, waypoint):
+        raise NotAvailableError
 
     def to_json(self):
-        raise NotImplementedError
+        raise NotAvailableError

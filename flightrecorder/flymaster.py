@@ -67,7 +67,7 @@ class FlightInformationRecord(_Struct):
         self.software_version = '%d.%02d' % (fields[0], fields[1])
         self.hardware_version = '%d.%02d' % (fields[2], fields[3])
         self.serial_number = fields[4]
-        self.competition_number = TRAILING_NULS_RE.sub('', fields[5])
+        self.competition_id = TRAILING_NULS_RE.sub('', fields[5])
         self.pilot_name = TRAILING_NULS_RE.sub('', fields[6])
         self.glider_brand = TRAILING_NULS_RE.sub('', fields[7])
         self.glider_model = TRAILING_NULS_RE.sub('', fields[8])
@@ -97,13 +97,12 @@ class TrackPositionRecordDelta(_Struct):
         self.dt_offset = datetime.timedelta(seconds=fields[5])
 
 
-class TrackPositionRecordDeltas(_Struct):
+class TrackPositionRecordDeltas(list):
 
     def __init__(self, data):
-        self.tprds = []
         i = 0
         while i < len(data):
-            self.tprds.append(TrackPositionRecordDelta(data[i:i + 6]))
+            self.append(TrackPositionRecordDelta(data[i:i + 6]))
             i += 6
 
 
@@ -147,7 +146,7 @@ class Flymaster(FlightRecorderBase):
                             s = self.buffer[:4 + length]
                             self.buffer = self.buffer[4 + length:]
                             break
-                self.buffer += self.io.read(1024, timeout)
+                self.buffer += self.io.read(timeout)
             logging.info('readpacket %r' % s[:length + 4])
             data = s[3:length + 3]
             checksum = length
@@ -198,24 +197,70 @@ class Flymaster(FlightRecorderBase):
     def pfmsnp(self):
         return SNP(*self.one('PFMSNP,', PFMSNP_RE).groups())
 
-    def ipfmdnl_lst(self):
+    def igc_helper(self, packets):
+        yield 'AFLYMASTER %s %s\r\n' % (self.model, self.serial_number)
+        date, lat, lon, alt, pressure, dt = None, None, None, None, None, None
+        for packet in packets:
+            #yield repr(packet) + '\r\n'
+            if isinstance(packet, FlightInformationRecord):
+                yield 'HFPLTPILOT:%s\r\n' % packet.pilot_name
+                yield 'HPGTYGLIDERTYPE:%s %s\r\n' % (packet.glider_brand, packet.glider_model)
+                yield 'HPCIDCOMPETITIONID:%s\r\n' % packet.competition_id
+                yield 'HFRFWFIRMWAREVERSION:%s\r\n' % packet.software_version
+                yield 'HFRHWHARDWAREVERSION:%s\r\n' % packet.hardware_version
+                yield 'HFFTYFRTYPE:FLYMASTER,%s\r\n' % self.model
+            elif isinstance(packet, KeyTrackPositionRecord):
+                if packet.dt.date() != date:
+                    yield 'HFDTE%s\r\n' % packet.dt.strftime('%d%m%y')
+                    date = packet.dt.date()
+                lat, lon, alt, pressure, dt = packet.lat, packet.lon, packet.alt, packet.pressure, packet.dt
+                yield 'B%s%02d%02d%03d%c%03d%02d%03d%c%c%05d%05d\r\n' % (
+                        dt.strftime('%H%M%S'),
+                        abs(lat) / 60000, (abs(lat) % 60000) / 1000, abs(lat) % 1000, 'S' if lat < 0 else 'N',
+                        abs(lon) / 60000, (abs(lon) % 60000) / 1000, abs(lon) % 1000, 'E' if lon < 0 else 'W',
+                        'A' if packet.fix_flag & 0x80 else 'V',
+                        Flymaster.pressure_altitude(pressure),
+                        alt)
+            elif isinstance(packet, TrackPositionRecordDeltas):
+                if lat is None:
+                    logging.debug('Track position record delta received before key track position record' % packet)
+                    continue
+                for tprd in packet:
+                    lat += tprd.lat_offset
+                    lon += tprd.lon_offset
+                    alt += tprd.alt_offset
+                    pressure += tprd.pressure_offset
+                    dt += tprd.dt_offset
+                    if dt.date() != date:
+                        yield 'HFDTE%s\r\n' % dt.strftime('%d%m%y')
+                        date = dt.date()
+                    yield 'B%s%02d%02d%03d%c%03d%02d%03d%c%c%05d%05d\r\n' % (
+                            dt.strftime('%H%M%S'),
+                            abs(lat) / 60000, (abs(lat) % 60000) / 1000, abs(lat) % 1000, 'S' if lat < 0 else 'N',
+                            abs(lon) / 60000, (abs(lon) % 60000) / 1000, abs(lon) % 1000, 'E' if lon < 0 else 'W',
+                            'A' if tprd.fix_flag & 0x80 else 'V',
+                            Flymaster.pressure_altitude(pressure),
+                            alt)
+
+    def pfmdnl_lst(self):
         tracks = []
+        def igc_lambda(self, dt):
+            return lambda: self.igc_helper(self.ipfmdnl(dt))
         for m in self.ieach('PFMDNL,LST,', PFMDNL_LST_RE):
             count, index, day, month, year, hour, minute, second = map(int, m.groups()[:8])
             hours, minutes, seconds = map(int, m.groups()[8:11])
+            dt = datetime.datetime(year + 2000, month, day, hour, minute, second, tzinfo=UTC())
             tracks.append(Track(
                 index=index,
-                datetime=datetime.datetime(year + 2000, month, day, hour, minute, second, tzinfo=UTC()),
-                duration=datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)))
+                datetime=dt,
+                duration=datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds),
+                _igc_lambda=igc_lambda(self, dt)))
             if index + 1 == count:
                 break
         return add_igc_filenames(tracks, 'XFR', self.serial_number)
 
-    def pfmdnl_lst(self):
-        return list(self.ipfmdnl_lst())
-
-    def ipfmdnl(self, tracklog, timeout=1):
-        self.write(('PFMDNL,%s,' % tracklog.dt.strftime('%y%m%d%H%M%S')).encode('nmea_sentence'))
+    def ipfmdnl(self, dt, timeout=1):
+        self.write(('PFMDNL,%s,' % dt.strftime('%y%m%d%H%M%S')).encode('nmea_sentence'))
         while True:
             packet = self.readpacket(timeout)
             if packet.id == 0xa0a0:
@@ -311,3 +356,7 @@ class Flymaster(FlightRecorderBase):
         tracks = list(track.to_json() for track in self.tracks())
         waypoints = list(waypoint.to_json() for waypoint in self.waypoints())
         return dict(tracks=tracks, waypoints=waypoints)
+
+    @staticmethod
+    def pressure_altitude(pressure):
+        return (1.0 - pow(abs((pressure / 10.0) / 1013.25), 0.190284)) * 44307.69

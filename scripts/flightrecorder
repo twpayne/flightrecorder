@@ -198,7 +198,15 @@ def fr_waypoints_delete(options, args):
         for arg in args:
             fr.waypoint_delete(arg)
     else:
-        fr.waypoint_delete()
+        try:
+            fr.waypoint_delete()
+        except NotAvailableError:
+            pass
+        waypoints = list(fr.waypoints())
+        while waypoints:
+            for w in waypoints:
+                fr.waypoint_delete(w.device_name)
+            waypoints = list(fr.waypoints())
 
 
 def fr_waypoints_download(options, args):

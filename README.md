@@ -5,19 +5,55 @@ Utilities for flight recorders
 Copyright (C) 2011  Tom Payne <twpayne@gmail.com>
 
 
+Supported flight recorders
+--------------------------
+
+Flytec: 5020, 5030, 6015, 6020, 6030
+
+Brauniger: Competino, Competino+, Compeo, Compeo+, Galileo
+
+Flymaster: B1 Nav
+
+
 Installation
-------------
+============
 
 Run:
-    python setup.py install
+
+    sudo python setup.py install
+
+
+Usage
+=====
 
 
 Downloading tracklogs
 ---------------------
 
 To download all tracklogs, just run
+
     flightrecorder
+
 The program will attempt to detect your flight recorder.
+
+
+
+Uploading waypoints
+-------------------
+
+Run
+
+    flightrecorder waypoint upload filename.wpt
+
+
+
+Downloading waypoints
+---------------------
+
+Run
+
+    flightrecorder waypoints > filename.wpt
+
 
 
 Licence

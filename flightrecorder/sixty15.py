@@ -216,13 +216,16 @@ class Sixty15(FlightRecorderBase):
                 break
             m = re.match(r'\A(.*?);([NS])\s+(\d+)\'(\d+\.\d+);([EW])\s+(\d+)\'(\d+\.\d+);\s*(\d+);\s*(\d+)\r\n', line)
             if m:
+                name = m.group(1).rstrip()
                 lat = int(m.group(3)) + float(m.group(4)) / 60.0
                 if m.group(2) == 'S':
                     lat = -lat
                 lon = int(m.group(6)) + float(m.group(7)) / 60.0
                 if m.group(5) == 'W':
                     lon = -lon
-                yield Waypoint(id=m.group(1).rstrip(), lat=lat, lon=lon, alt=int(m.group(8)), radius=int(m.group(9)))
+                alt = int(m.group(8))
+                radius = int(m.group(9))
+                yield Waypoint(name, lat, lon, alt, radius=radius)
             else:
                 raise ProtocolError('unexpected response %r' % line)
             line = self.readline()
@@ -237,11 +240,11 @@ class Sixty15(FlightRecorderBase):
         lon_hemi = 'E' if waypoint.lon > 0 else 'W'
         lon_deg, lon_min = divmod(abs(60 * waypoint.lon), 60)
         self.write('%-16s;%s  %2d\'%6.3f;%s %3d\'%6.3f;%6d;%6d\r\n' % (
-            INVALID_CHARS_RE.sub('', waypoint.name or waypoint.id)[:16],
+            INVALID_CHARS_RE.sub('', waypoint.get_id_name())[:16],
             lat_hemi, lat_deg, lat_min,
             lon_hemi, lon_deg, lon_min,
-            waypoint.alt,
-            getattr(waypoint, 'radius', 400)))
+            waypoint.alt or 0,
+            waypoint.radius or 400))
         line = self.readline()
         if line == ' Done\r\n':
             pass

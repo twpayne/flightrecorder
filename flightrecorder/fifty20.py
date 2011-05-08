@@ -234,8 +234,8 @@ class Fifty20(FlightRecorderBase):
             abs(60 * waypoint.lon) / 60,
             abs(60 * waypoint.lon) % 60,
             'W' if waypoint.lon < 0 else 'E',
-            waypoint.name.encode('nmea_characters')[:17],
-            waypoint.alt))
+            waypoint.get_id_name().encode('nmea_characters')[:17],
+            waypoint.alt or 0))
 
     def ipbrwps(self):
         for m in self.ieach('PBRWPS,', PBRWPS_RE):
@@ -245,7 +245,10 @@ class Fifty20(FlightRecorderBase):
             lon = int(m.group(4)) + float(m.group(5)) / 60
             if m.group(6) == 'W':
                 lon *= -1
-            yield Waypoint(lat=lat, lon=lon, id=m.group(7).rstrip(), name=m.group(8).rstrip(), alt=int(m.group(9)))
+            id = m.group(7).rstrip()
+            name = m.group(8).rstrip()
+            alt = int(m.group(9))
+            yield Waypoint(name, lat, lon, alt, id=id)
 
     def pbrwps(self):
         return list(self.ipbrwps())

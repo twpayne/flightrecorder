@@ -59,21 +59,11 @@ class SRecordError(RuntimeError):
         self.line = line
 
 
-class SRecord(object):
-
-    def __init__(self, address, data):
-        self.address = address
-        self.data = data
-
-    def __repr__(self):
-        return '@%06X:%r' % (self.address, self.data)
-
-
 class SRecordFile(object):
 
     def __init__(self, lines):
         self.header = None
-        self.srecords = []
+        self.data = {}
         self.starting_executing_address = None
         for line in lines:
             line = line.rstrip()
@@ -97,7 +87,7 @@ class SRecordFile(object):
                 print repr(dict(i=i, length=length, address=address, data=data, len_data=len(data)))
                 if length != 2 + i + len(data):
                     raise SRecordError(line)
-                self.srecords.append(SRecord(address, data))
+                self.data[address] = data
                 continue
             m = S5_RE.match(line)
             if m:

@@ -201,7 +201,6 @@ class Flymaster(FlightRecorderBase):
         yield 'AFLYMASTER %s %s\r\n' % (self.model, self.serial_number)
         date, lat, lon, alt, pressure, dt = None, None, None, None, None, None
         for packet in packets:
-            #yield repr(packet) + '\r\n'
             if isinstance(packet, FlightInformationRecord):
                 yield 'HFPLTPILOT:%s\r\n' % packet.pilot_name
                 yield 'HPGTYGLIDERTYPE:%s %s\r\n' % (packet.glider_brand, packet.glider_model)

@@ -48,6 +48,7 @@ PBRRTS_RE1 = re.compile(r'\APBRRTS,(\d+),(\d+),0+,(.*)\Z')
 PBRRTS_RE2 = re.compile(r'\APBRRTS,(\d+),(\d+),(\d+),([^,]*),(.*?)\Z')
 PBRSNP_RE = re.compile(r'\APBRSNP,([^,]*),([^,]*),([^,]*),([^,]*)\Z')
 PBRTL_RE = re.compile(r'\APBRTL,(\d+),(\d+),(\d+).(\d+).(\d+),(\d+):(\d+):(\d+),(\d+):(\d+):(\d+)\Z')
+PBRTLE_RE = re.compile(r'\APBRTLE,(\d+),(\d+),(\d+).(\d+).(\d+),(\d+):(\d+):(\d+),(\d+):(\d+):(\d+),(\d+),(\d+),(\d+),(\d+)')
 PBRWPS_RE = re.compile(r'\APBRWPS,(\d{2})(\d{2}\.\d{3}),([NS]),(\d{3})(\d{2}\.\d{3}),([EW]),([^,]*),([^,]*),(\d+)\Z')
 
 
@@ -221,6 +222,26 @@ class Fifty20(FlightRecorderBase):
                 _igc_lambda=igc_lambda(self, index)))
         return add_igc_filenames(tracks, self.manufacturer[:3].upper(), self.serial_number)
 
+    def pbrtle(self):
+        tracks = []
+        def igc_lambda(self, index):
+            return lambda: self.ipbrtr(index)
+        for m in self.ieach('PBRTLE,', PBRTLE_RE, 0.5):
+            index = int(m.group(2))
+            day, month, year, hour, minute, second = (int(i) for i in m.groups()[2:8])
+            hours, minutes, seconds = (int(i) for i in m.groups()[8:11])
+            tracks.append(Track(
+                count=int(m.group(1)),
+                index=index,
+                datetime=datetime.datetime(year + 2000, month, day, hour, minute, second, tzinfo=UTC()),
+                duration=datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds),
+                max_a1=int(m.group(12)),
+                max_a2=int(m.group(13)),
+                max_a3=int(m.group(14)),
+                scan_rate=int(m.group(15)),
+                _igc_lambda=igc_lambda(self, index)))
+        return add_igc_filenames(tracks, self.manufacturer, self.serial_number)
+
     def ipbrtr(self, index):
         return self.ieach('PBRTR,%02d' % index)
 
@@ -264,6 +285,10 @@ class Fifty20(FlightRecorderBase):
             # so, instead, pretend that the command is not available
             #self.none('PBRWPX,,', None)
             raise NotAvailableError
+
+    @property
+    def extended_commands(self):
+        return self.snp.model in set(('6020', '6030', 'COMPETINO+', 'COMPEO+'))
 
     @property
     def manufacturer(self):

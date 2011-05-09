@@ -22,7 +22,7 @@ from itertools import cycle, izip
 
 
 VIGENERE_ALPHABET = string.ascii_uppercase + string.ascii_lowercase + string.digits
-VIGENERE_KEY = 'Verna12Mrt34st'
+VIGENERE_KEY = 'Verna12Mry34st'
 
 
 class Vigenere(object):

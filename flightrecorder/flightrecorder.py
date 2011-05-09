@@ -24,6 +24,7 @@ import fifty20
 from .fifty20 import Fifty20
 import flymaster
 from .flymaster import Flymaster
+import nmea
 from .serialio import SerialIO
 import sixty15
 from .sixty15 import Sixty15
@@ -37,6 +38,7 @@ DEVICE_GLOBS = {
             '/dev/cuad*',),
         'Linux': (
             '/dev/ttyUSB*',)}
+
 
 class FlightRecorder(object):
 

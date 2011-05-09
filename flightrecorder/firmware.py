@@ -102,6 +102,27 @@ class SRecordFile(object):
                 continue
             raise SRecordError(line)
 
+    def pages(self, size=256):
+        data_offset, data, data_length = None, [], 0
+        for address in sorted(self.data.keys()):
+            if data_offset is None:
+                data_offset = size * ((address + size - 1) // size)
+            fill_length = address - data_offset - data_length
+            if fill_length > 0:
+                data.append('\xff' * fill_length)
+                data_length += fill_length
+            elif fill_length != 0:
+                raise SRecordError
+            data.append(self.data[address])
+            data_length += len(self.data[address])
+        n, incomplete = divmod(data_length, size)
+        if incomplete:
+            data.append('\xff' * (size - incomplete))
+            n += 1
+        data = ''.join(data)
+        for i in xrange(0, n):
+            yield (data_offset + i * size, data[i * size:(i + 1) * size])
+
 
 def decode(file):
     vigenere = Vigenere(VIGENERE_ALPHABET, VIGENERE_KEY)

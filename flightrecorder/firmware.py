@@ -73,7 +73,6 @@ class SRecordFile(object):
                 data = ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(2)))
                 checksum = int(m.group(3), 16) # FIXME check
                 if length != len(data) + 3:
-                    logging.error('length mismatch %d, %d, %r' % (length, len(data), data))
                     raise SRecordError(line)
                 self.header = data
                 continue
@@ -84,7 +83,6 @@ class SRecordFile(object):
                 address = int(m.group(3), 16)
                 data = ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(4)))
                 checksum = int(m.group(5), 16)
-                print repr(dict(i=i, length=length, address=address, data=data, len_data=len(data)))
                 if length != 2 + i + len(data):
                     raise SRecordError(line)
                 self.data[address] = data
@@ -102,7 +100,7 @@ class SRecordFile(object):
                 checksum = int(m.group(2), 16)
                 self.starting_executing_address = address
                 continue
-            logging.error('invalid S-record %r' % line)
+            raise SRecordError(line)
 
 
 def decode(file):

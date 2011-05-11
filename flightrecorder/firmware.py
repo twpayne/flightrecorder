@@ -25,6 +25,10 @@ VIGENERE_ALPHABET = string.ascii_uppercase + string.ascii_lowercase + string.dig
 VIGENERE_KEY = 'Verna12Mry34st'
 
 
+class VigenereError(RuntimeError):
+    pass
+
+
 class Vigenere(object):
 
     def __init__(self, alphabet, key):
@@ -34,10 +38,16 @@ class Vigenere(object):
         self.reset()
 
     def encode(self, s):
-        return ''.join(self.alphabet[(self.indices[c] + self.indices[k]) % len(self.alphabet)] for c, k in izip(s, self.ikey))
+        try:
+            return ''.join(self.alphabet[(self.indices[c] + self.indices[k]) % len(self.alphabet)] for c, k in izip(s, self.ikey))
+        except KeyError:
+            raise VigenereError
 
     def decode(self, s):
-        return ''.join(self.alphabet[(self.indices[c] - self.indices[k]) % len(self.alphabet)] for c, k in izip(s, self.ikey))
+        try:
+            return ''.join(self.alphabet[(self.indices[c] - self.indices[k]) % len(self.alphabet)] for c, k in izip(s, self.ikey))
+        except KeyError:
+            raise VigenereError
 
     def reset(self):
         self.ikey = cycle(self.key)

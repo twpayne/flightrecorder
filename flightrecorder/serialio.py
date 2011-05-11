@@ -28,23 +28,34 @@ from .errors import TimeoutError
 
 class SerialIO(object):
 
-    def __init__(self, filename):
+    def __init__(self, filename, speed=tty.B57600):
         try:
             self.filename = filename
             logging.info('opening %r' % filename)
             self.fd = os.open(filename, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
             tty.setraw(self.fd)
             attr = tty.tcgetattr(self.fd)
-            attr[tty.ISPEED] = attr[tty.OSPEED] = tty.B57600
+            attr[tty.ISPEED] = attr[tty.OSPEED] = speed
             tty.tcsetattr(self.fd, tty.TCSAFLUSH, attr)
         except termios.error:
             raise IOError
 
-    def read(self, timeout=1):
+    def set_speed(self, speed):
+        attr = tty.tcgetattr(self.fd)
+        attr[tty.ISPEED] = attr[tty.OSPEED] = speed
+        tty.tcsetattr(self.fd, tty.TCSAFLUSH, attr)
+
+    def read(self, timeout=1, n=1024):
         if select.select([self.fd], [], [], timeout) == ([], [], []):
             raise TimeoutError
-        data = os.read(self.fd, 1024)
+        data = os.read(self.fd, n)
         logging.debug('%.3f read %r (%d bytes)' % (time.time(), data, len(data)))
+        return data
+
+    def readn(self, n, timeout=1):
+        data = ''
+        while len(data) < n:
+            data += self.read(timeout, n - len(data))
         return data
 
     def write(self, line):

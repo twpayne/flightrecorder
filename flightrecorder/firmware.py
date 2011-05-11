@@ -19,6 +19,7 @@ import logging
 import re
 import string
 from itertools import cycle, izip
+import zipfile
 
 
 VIGENERE_ALPHABET = string.ascii_uppercase + string.ascii_lowercase + string.digits
@@ -138,6 +139,33 @@ def decode(file):
     vigenere = Vigenere(VIGENERE_ALPHABET, VIGENERE_KEY)
     for line in file:
         yield vigenere.decode(line.rstrip())
+
+
+def firmware_model(filename):
+    for pattern, model in (('5020|CTINO', '5020'), ('6015', '6015')):
+        if re.search(pattern, filename, re.I):
+            return model
+    return '6020'
+
+
+def firmware(file):
+    try:
+        zf = zipfile.ZipFile(file, 'r')
+        for zi in zf.infolist():
+            try:
+                yield (firmware_model(zi.filename), SRecordFile(decode(zf.open(zi))))
+            except (VigenereError, SRecordError):
+                continue
+    except zipfile.BadZipfile:
+        file.seek(0)
+    try:
+        yield (firmware_model(file.name), SRecordFile(decode(file)))
+    except (VigenereError, SRecordError):
+        file.seek(0)
+    try:
+        yield (firmware_model(file.name), SRecordFile(file))
+    except SRecordError:
+        pass
 
 
 if __name__ == '__main__':

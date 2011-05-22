@@ -157,12 +157,14 @@ def firmware(file):
             except (VigenereError, SRecordError):
                 continue
     except zipfile.BadZipfile:
-        file.seek(0)
+        pass
     try:
+        file.seek(0)
         yield (firmware_model(file.name), SRecordFile(decode(file)))
     except (VigenereError, SRecordError):
-        file.seek(0)
+        pass
     try:
+        file.seek(0)
         yield (firmware_model(file.name), SRecordFile(file))
     except SRecordError:
         pass

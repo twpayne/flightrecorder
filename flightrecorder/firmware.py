@@ -275,4 +275,22 @@ def firmware(file):
 
 if __name__ == '__main__':
     import sys
-    print SRecordFile(sys.stdin.readlines()).__dict__
+    if False:
+        for model, srf in firmware(open(sys.argv[1])):
+            print model, srf.header, len(srf.data)
+    if True:
+        import logging
+        from serialio import SerialIO
+        import tty
+        model = '5020'
+        logging.basicConfig(level=logging.DEBUG)
+        io = SerialIO('/dev/ttyUSB0', tty.B9600)
+        m32c87 = M32C87(io)
+        m32c87.initialize()
+        m32c87.set_speed(tty.B19200 if model == '5020' else tty.B57600)
+        sys.exit()
+        m32c87.unlock()
+        m32c87.erase()
+        for address, page in srf.pages():
+            m32c87.page_write(address, page)
+        m32c87.lock()

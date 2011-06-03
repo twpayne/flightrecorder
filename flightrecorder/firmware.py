@@ -113,11 +113,11 @@ class SRecordFile(object):
                 continue
             raise SRecordError(line)
 
-    def pages(self, size=256):
+    def pages(self):
         data_offset, data, data_length = None, [], 0
         for address in sorted(self.data.keys()):
             if data_offset is None:
-                data_offset = size * ((address + size - 1) // size)
+                data_offset = address & ~0xff
             fill_length = address - data_offset - data_length
             if fill_length > 0:
                 data.append('\xff' * fill_length)
@@ -126,13 +126,13 @@ class SRecordFile(object):
                 raise SRecordError
             data.append(self.data[address])
             data_length += len(self.data[address])
-        n, incomplete = divmod(data_length, size)
+        incomplete = data_length & 0xff
         if incomplete:
             data.append('\xff' * (size - incomplete))
-            n += 1
+            data_length += incomplete
         data = ''.join(data)
-        for i in xrange(0, n):
-            yield (data_offset + i * size, data[i * size:(i + 1) * size])
+        for i in xrange(0, data_length >> 8):
+            yield ((data_offset >> 8) + i, data[i * size:(i + 1) * size])
 
 
 def decode(file):

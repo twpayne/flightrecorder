@@ -17,7 +17,9 @@
 
 import logging
 import re
+import select
 import string
+import struct
 from itertools import cycle, izip
 import zipfile
 
@@ -133,6 +135,107 @@ class SRecordFile(object):
         data = ''.join(data)
         for i in xrange(0, data_length >> 8):
             yield ((data_offset >> 8) + i, data[i * size:(i + 1) * size])
+
+
+class M32C87Error(RuntimeError):
+
+    def __init__(self, message=None):
+        self.message = message
+
+
+class M32C87(object):
+
+    # Status register (SRD)
+    WSM_READY = 0x80
+    ERASE_ERROR = 0x20
+    PROGRAM_ERROR = 0x10
+    BLOCK_ERROR = 0x08
+
+    # Status register 1 (SRD1)
+    BOOT_UPDATE_COMPLETE = 0x80
+    CHECKSUM_MATCH = 0x10
+    DATA_RECEIVE_TIMEOUT = 0x02
+
+    def __init__(self, io):
+        self.io = io
+
+    def sleep(self, timeout):
+        select.select([], [], [], timeout)
+
+    def initialize(self):
+        for i in xrange(0, 16):
+            self.io.write('\x00')
+            self.sleep(0.02)
+        self.sleep(0.05)
+        if self.io.readn(1) != '\xb0':
+            raise M32C87Error('initialize')
+
+    def set_speed(self, speed):
+        c = {tty.B9600: '\xb0', tty.B19200: '\xb1', tty.B38400: '\xb2', tty.B57600: '\xb3', tty.B115200: '\xb4'}[speed]
+        self.io.write(c)
+        self.io.set_speed(speed)
+        self.sleep(0.05)
+        if self.io.readn(1) != c:
+            raise M32C87Error('set_speed')
+
+    def command(self, value, format='', args=(), output=None):
+        self.io.write(struct.pack('>B' + format, value, *args))
+        if output:
+            return struct.unpack('>' + output, self.io.readn(struct.calcsize(output)))
+
+    def check_id(self):
+        pass # FIXME
+
+    def lock(self):
+        self.command('\x75')
+
+    def unlock(self):
+        self.command('\x7a')
+
+    def erase(self):
+        self.command('\xa7', 'B', ('\xd0',))
+        if status_register_check(M32C87.ERASE_ERROR):
+            raise M32C87Error('erase')
+
+    def status_register_read(self):
+        return self.command('\x70', '', (), 'BB')
+
+    def status_register_check(self, bits):
+        while True:
+            srd = self.status_register_read()
+            if srd[0] & M32C87.WSM_READY:
+                return bool(srd[0] & bits)
+            self.sleep(0.05)
+
+    def status_register_clear(self):
+        self.command('\x50')
+        self.sleep(0.05)
+
+    def page_write(self, page, data):
+        self.command('\x41', 'H256s', (page, data))
+        self.sleep(0.05)
+        if self.status_register_check(M32C87.PROGRAM_ERROR):
+            raise M32C87Error('page_write')
+
+    # FIXME delete member functions below this line
+
+    def page_erase(self, page):
+        self.command(0x20, 'HB', (page, 0xd0))
+
+    def page_erase_all_unlocked(self):
+        self.command('\xa7', 'B', ('\xd0',))
+
+    def page_read(self, page):
+        return self.command('\xff', 'H', (page,), '256s')[0]
+
+    def page_lock_get(self, page):
+        return self.command('\x71', 'H', (page,), 'B')[0]
+
+    def page_lock_set(self, page, value):
+        self.command('\x77', 'HB', (page, 0xd0))
+
+    def check_data_get(self):
+        return self.command('\xfd', '', (), 'H')[0]
 
 
 def decode(file):

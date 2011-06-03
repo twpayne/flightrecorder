@@ -23,7 +23,7 @@ import time
 import tty
 
 
-from .errors import TimeoutError
+from errors import TimeoutError
 
 
 class SerialIO(object):

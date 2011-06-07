@@ -17,6 +17,7 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 import datetime
 from glob import glob
 import json
@@ -294,6 +295,8 @@ def execute(options, args, commands):
 
 
 def main(argv):
+    config_parser = ConfigParser()
+    config_parser.read(('/etc/flightrecorderrc', os.path.expanduser('~/.flightrecorderrc')))
     parser = OptionParser()
     parser.add_option('-d', '--device', metavar='DEVICE', help='set device filename')
     parser.add_option('-D', '--directory', metavar='DIRECTORY', help='set output directory')
@@ -303,6 +306,17 @@ def main(argv):
     parser.add_option('-v', '--verbose', action='count', dest='level', help='show debugging information')
     parser.set_defaults(directory='.')
     parser.set_defaults(level=0)
+    for section, key, method in (
+            ('debug', 'level', ConfigParser.getint),
+            ('instrument', 'device', ConfigParser.get),
+            ('instrument', 'model', ConfigParser.get),
+            ('tracks', 'directory', lambda cp, s, k: os.path.expanduser(cp.get(s, k))),
+            ('tracks', 'overwrite', ConfigParser.getboolean),
+            ('waypoints', 'format', ConfigParser.get)):
+        try:
+            parser.set_default(key, method(config_parser, section, key))
+        except (NoSectionError, NoOptionError):
+            pass
     options, args = parser.parse_args(argv[1:])
     options.basename = os.path.basename(argv[0])
     logging.basicConfig(level=logging.WARN - 10 * options.level)

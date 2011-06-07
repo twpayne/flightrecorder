@@ -261,11 +261,13 @@ def firmware(file):
                 continue
     except zipfile.BadZipfile:
         pass
-    try:
-        file.seek(0)
-        yield (firmware_model(file.name), SRecordFile(decode(file)))
-    except (VigenereError, SRecordError):
-        pass
+    file.seek(0)
+    m = re.search(r'[%s]{18,}\s+([%s]+\s+){128,}' % (VIGENERE_ALPHABET, VIGENERE_ALPHABET), file.read(), re.M)
+    if m:
+        try:
+            yield (firmware_model(file.name), SRecordFile(decode(m.group().splitlines())))
+        except (VigenereError, SRecordError):
+            pass
     try:
         file.seek(0)
         yield (firmware_model(file.name), SRecordFile(file))

@@ -17,9 +17,7 @@ Flytec 5020
 Flytec 6030
 ===========
 
-1. The firmware is only distributed in Windows .EXE format.
-
-2. The `PBRWPRE` (upload extended waypoint) command appears not to work at all.
+1. The `PBRWPRE` (upload extended waypoint) command appears not to work at all.
 
 
 

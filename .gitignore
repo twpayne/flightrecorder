@@ -1,6 +1,9 @@
 *.cup
+*.exe
+*.hec
 *.IGC
 *.json
+*.moc
 *.wpt
 *.zip
 /build

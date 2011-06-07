@@ -168,7 +168,7 @@ def fr_tracks_download_helper(options, args, zf):
 
 def fr_tracks_download(options, args):
     for track in fr_tracks_download_helper(options, args, None):
-        with open(track.igc_filename, 'w') as output:
+        with open(os.path.join(options.directory, track.igc_filename), 'w') as output:
             for line in track.igc:
                 output.write(line)
 
@@ -296,10 +296,12 @@ def execute(options, args, commands):
 def main(argv):
     parser = OptionParser()
     parser.add_option('-d', '--device', metavar='DEVICE', help='set device filename')
+    parser.add_option('-D', '--directory', metavar='DIRECTORY', help='set output directory')
     parser.add_option('-f', '--format', metavar='FORMAT', help='set output format')
     parser.add_option('-o', '--overwrite', action='store_true', help='re-download already downloaded tracklogs')
     parser.add_option('-m', '--model', metavar='TYPE', type='choice', choices=FlightRecorder.SUPPORTED_MODELS, help='set device type')
     parser.add_option('-v', '--verbose', action='count', dest='level', help='show debugging information')
+    parser.set_defaults(directory='.')
     parser.set_defaults(level=0)
     options, args = parser.parse_args(argv[1:])
     options.basename = os.path.basename(argv[0])

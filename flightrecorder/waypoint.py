@@ -160,6 +160,9 @@ def load(fp, encoding='iso-8859-1'):
     lines = list(line.rstrip() for line in fp.read().decode(encoding).splitlines())
     projs = {}
     waypoints = []
+    # FIXME horrible hack to remove byte order mark and new B line from CompeGPS files
+    if len(lines) >= 1 and re.search(r'B\s+UTF-8\Z', lines[0]):
+        lines = lines[1:]
     if len(lines) >= 2 and re.match(r'\AG\s+WGS\s+84\s*\Z', lines[0]) and re.match(r'\AU\s+1\s*\Z', lines[1]):
         for line in lines[2:]:
             if not line:

@@ -200,6 +200,9 @@ def load(fp, encoding='iso-8859-1'):
                 if m.group(2):
                     waypoint.radius = float(m.group(2))
                 continue
+            m = re.match(r'\Az', line)
+            if m:
+                continue
             logging.warning('unrecognized waypoint %r' % line)
     elif len(lines) >= 1 and re.match(r'\A\$FormatGEO\s*\Z', lines[0]):
         for line in lines[1:]:

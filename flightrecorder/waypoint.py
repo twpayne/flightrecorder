@@ -164,7 +164,7 @@ def load(fp, encoding='iso-8859-1'):
         for line in lines[2:]:
             if not line:
                 continue
-            m = re.match(r'\AW\s+(\S+)\s+A\s+(\d+\.\d+).*([NS])\s+(\d+\.\d+).*([EW])\s+\d{2}-(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)-\d{2}\s+\d{2}:\d{2}:\d{2}\s+(-?\d+(?:\.\d+))(?:\s+(.*))?\Z', line)
+            m = re.match(r'\AW\s+(\S+)\s+A\s+(\d+\.\d+).*([NS])\s+(\d+\.\d+).*([EW])\s+\S+\s+\S+\s+(-?\d+(?:\.\d+))(?:\s+(.*))?\Z', line)
             if m:
                 id = m.group(1)
                 lat = float(m.group(2))

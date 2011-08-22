@@ -16,6 +16,7 @@
 
 
 from glob import glob
+import logging
 import re
 import os
 
@@ -28,6 +29,9 @@ import nmea
 from .serialio import SerialIO
 import sixty15
 from .sixty15 import Sixty15
+
+
+logger = logging.getLogger(__name__)
 
 
 DEVICE_GLOBS = {
@@ -65,19 +69,26 @@ class FlightRecorder(object):
                 return Sixty15(io)
             elif model is None:
                 try:
-                    io.write('PBRSNP,'.encode('nmea_sentence'))
+                    line = 'PBRSNP,'.encode('nmea_sentence')
+                    logger.info('write %r' % line)
+                    io.write(line)
                     line = io.read(0.2)
                     while line.find('\x11' if line[0] == '\x13' else '\n') == -1:
                         line += io.read()
+                    logger.info('readline %r' % line)
                     if re.match('\x13\$PBRSNP,[^,]*,[^,]*,[^,]*,[^,]*\*[0-9A-F]{2}\r\n\x11\Z', line):
                         return Fifty20(io, line)
                     if re.match('\$PBRSNP,[^,]*,[^,]*,[^,]*,[^,]*,[^,]*,[^,]*\*[0-9A-F]{2}\r\n\Z', line):
                         return Flymaster(io, line)
                 except TimeoutError:
-                    io.write('ACT_BD_00\r\n')
+                    line = 'ACT_BD_00\r\n'
+                    logger.info('write %r' % line)
+                    io.write(line)
                     line = io.read(0.2)
                     while line.find('\n') == -1:
                         line += io.read()
+                    logger.info('readline %r' % line)
                     if re.match('(Brauniger IQ-Basic|Flytec 6015)\r\n\Z', line):
+                        logger.info('read %r' % line)
                         return Sixty15(io, line)
         raise RuntimeError # FIXME

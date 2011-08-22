@@ -19,7 +19,6 @@
 
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 import datetime
-from glob import glob
 import json
 import logging
 from math import acos, ceil, cos, pi, sin
@@ -34,7 +33,6 @@ import zipfile
 from flightrecorder import FlightRecorder
 from flightrecorder.errors import NotAvailableError
 from flightrecorder.utc import UTC
-from flightrecorder.waypoint import Waypoint
 import flightrecorder.waypoint as waypoint
 
 

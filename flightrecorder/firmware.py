@@ -281,7 +281,6 @@ if __name__ == '__main__':
         for model, srf in firmware(open(sys.argv[1])):
             print model, srf.header, len(srf.data)
     if True:
-        import logging
         from serialio import SerialIO
         import tty
         model = '5020'

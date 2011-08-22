@@ -15,7 +15,6 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from collections import deque
 import datetime
 from itertools import chain
 import logging
@@ -24,7 +23,7 @@ import struct
 
 from base import FlightRecorderBase
 from common import Track, add_igc_filenames
-from errors import NotAvailableError, ProtocolError, ReadError, TimeoutError, WriteError
+from errors import NotAvailableError, ProtocolError, ReadError
 from utc import UTC
 from waypoint import Waypoint
 

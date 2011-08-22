@@ -22,8 +22,7 @@ import struct
 
 from base import FlightRecorderBase
 from common import Track, add_igc_filenames
-from errors import NotAvailableError, ProtocolError, ReadError, TimeoutError, WriteError
-import nmea
+from errors import NotAvailableError, ProtocolError
 from utc import UTC
 from waypoint import Waypoint
 

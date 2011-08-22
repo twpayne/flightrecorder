@@ -66,7 +66,7 @@ class NMEACharacterCodec(object):
 
     def encode(self, input, errors='strict'):
         if errors == 'replace':
-            return (NMEA_INVALID_CHAR_RE.sub(lambda m: '?' * len(line), input), len(input))
+            return (NMEA_INVALID_CHAR_RE.sub(lambda m: '?' * len(m.group()), input), len(input))
         elif errors == 'strict':
             if NMEA_INVALID_CHAR_RE.search(input):
                 raise UnicodeError

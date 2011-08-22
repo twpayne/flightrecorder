@@ -20,12 +20,12 @@ import logging
 import re
 import struct
 
-from .base import FlightRecorderBase
-from .common import Track, add_igc_filenames
-from .errors import ProtocolError, ReadError, TimeoutError, WriteError
+from base import FlightRecorderBase
+from common import Track, add_igc_filenames
+from errors import ProtocolError, ReadError, TimeoutError, WriteError
 import nmea
-from .utc import UTC
-from .waypoint import Waypoint
+from utc import UTC
+from waypoint import Waypoint
 
 
 logger = logging.getLogger(__name__)

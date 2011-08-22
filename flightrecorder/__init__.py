@@ -15,7 +15,7 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from .flightrecorder import FlightRecorder
+from flightrecorder import FlightRecorder
 
 
 __all__ = ['FlightRecorder']

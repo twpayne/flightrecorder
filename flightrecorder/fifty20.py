@@ -28,6 +28,9 @@ from .utc import UTC
 from .waypoint import Waypoint
 
 
+logger = logging.getLogger(__name__)
+
+
 MANUFACTURER = {}
 for model in '5020 5030 6020 6030'.split():
     MANUFACTURER[model] = 'Flytec'
@@ -93,11 +96,11 @@ class Fifty20(FlightRecorderBase):
             self.buffer = self.io.read(timeout)
         if self.buffer[0] == XON:
             self.buffer = self.buffer[1:]
-            logging.debug('read XON')
+            logger.debug('read XON')
             return XON
         elif self.buffer[0] == XOFF:
             self.buffer = self.buffer[1:]
-            logging.debug('read XOFF')
+            logger.debug('read XOFF')
             return XOFF
         else:
             line = ''
@@ -109,11 +112,11 @@ class Fifty20(FlightRecorderBase):
 		else:
                     line += self.buffer[:index + 1]
                     self.buffer = self.buffer[index + 1:]
-                    logging.info('readline %r' % line)
+                    logger.info('readline %r' % line)
                     return line
 
     def write(self, line):
-        logging.info('write %r' % line)
+        logger.info('write %r' % line)
         self.io.write(line)
 
     def ieach(self, command, re=None, timeout=1):

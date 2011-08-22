@@ -28,6 +28,9 @@ from .utc import UTC
 from .waypoint import Waypoint
 
 
+logger = logging.getLogger(__name__)
+
+
 EPOCH = datetime.datetime(2000, 1, 1, 0, 0, 0)
 PBRSNP_RE = re.compile(r'PBRSNP,([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*)\Z')
 PFMCFG_RE = re.compile(r'FMCFG,([A-Z]+):(.*)\Z')
@@ -127,7 +130,7 @@ class Flymaster(FlightRecorderBase):
             else:
                 result += self.buffer[0:index + 1]
                 self.buffer = self.buffer[index + 1:]
-                logging.info('readline %r' % result)
+                logger.info('readline %r' % result)
                 return result
 
     def readpacket(self, timeout):
@@ -137,7 +140,7 @@ class Flymaster(FlightRecorderBase):
                 if len(self.buffer) >= 2:
                     id = struct.unpack('<H', self.buffer[:2])[0]
                     if id == 0xa3a3:
-                        logging.info('readpacket %r' % self.buffer[:2])
+                        logger.info('readpacket %r' % self.buffer[:2])
                         self.buffer = self.buffer[2:]
                         return Packet(id, None)
                     if len(self.buffer) >= 4:
@@ -147,7 +150,7 @@ class Flymaster(FlightRecorderBase):
                             self.buffer = self.buffer[4 + length:]
                             break
                 self.buffer += self.io.read(timeout)
-            logging.info('readpacket %r' % s[:length + 4])
+            logger.info('readpacket %r' % s[:length + 4])
             data = s[3:length + 3]
             checksum = length
             for c in data:
@@ -159,7 +162,7 @@ class Flymaster(FlightRecorderBase):
             return Packet(id, data)
 
     def write(self, line):
-        logging.info('write %r' % line)
+        logger.info('write %r' % line)
         self.io.write(line)
 
     def ieach(self, command, re=None, timeout=1):
@@ -222,7 +225,7 @@ class Flymaster(FlightRecorderBase):
                         alt)
             elif isinstance(packet, TrackPositionRecordDeltas):
                 if lat is None:
-                    logging.debug('Track position record delta received before key track position record' % packet)
+                    logger.debug('Track position record delta received before key track position record' % packet)
                     continue
                 for tprd in packet:
                     lat += tprd.lat_offset
@@ -271,7 +274,7 @@ class Flymaster(FlightRecorderBase):
             elif packet.id == 0xa3a3:
                 break
             else:
-                logging.info('unknown packet type %04X' % packet.id)
+                logger.info('unknown packet type %04X' % packet.id)
 
     def ipfmwpl(self):
         try:

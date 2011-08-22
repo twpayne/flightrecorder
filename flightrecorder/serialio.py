@@ -26,12 +26,15 @@ import tty
 from errors import TimeoutError
 
 
+logger = logging.getLogger(__name__)
+
+
 class SerialIO(object):
 
     def __init__(self, filename, speed=tty.B57600):
         try:
             self.filename = filename
-            logging.info('opening %r' % filename)
+            logger.info('opening %r' % filename)
             self.fd = os.open(filename, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
             tty.setraw(self.fd)
             attr = tty.tcgetattr(self.fd)
@@ -49,7 +52,7 @@ class SerialIO(object):
         if select.select([self.fd], [], [], timeout) == ([], [], []):
             raise TimeoutError
         data = os.read(self.fd, n)
-        logging.debug('%.3f read %r (%d bytes)' % (time.time(), data, len(data)))
+        logger.debug('%.3f read %r (%d bytes)' % (time.time(), data, len(data)))
         return data
 
     def readn(self, n, timeout=1):
@@ -59,7 +62,7 @@ class SerialIO(object):
         return data
 
     def write(self, line):
-        logging.debug('%.3f write %r (%d bytes)' % (time.time(), line, len(line)))
+        logger.debug('%.3f write %r (%d bytes)' % (time.time(), line, len(line)))
         if os.write(self.fd, line) != len(line):
             raise WriteError
 

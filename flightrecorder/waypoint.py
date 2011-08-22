@@ -19,6 +19,9 @@ import logging
 import re
 
 
+logger = logging.getLogger(__name__)
+
+
 class WaypointError(RuntimeError):
     pass
 
@@ -206,7 +209,7 @@ def load(fp, encoding='iso-8859-1'):
             m = re.match(r'\Az', line)
             if m:
                 continue
-            logging.warning('unrecognized waypoint %r' % line)
+            logger.warning('unrecognized waypoint %r' % line)
     elif len(lines) >= 1 and re.match(r'\A\$FormatGEO\s*\Z', lines[0]):
         for line in lines[1:]:
             if not line:
@@ -224,7 +227,7 @@ def load(fp, encoding='iso-8859-1'):
                 name = m.group(11)
                 waypoints.append(Waypoint(name, lat, lon, alt, id=id))
                 continue
-            logging.warning('unrecognized waypoint %r' % line)
+            logger.warning('unrecognized waypoint %r' % line)
     elif len(lines) >= 1 and re.match(r'\A\$FormatUTM\s*\Z', lines[0]):
         for line in lines[1:]:
             if not line:
@@ -244,7 +247,7 @@ def load(fp, encoding='iso-8859-1'):
                 name = m.group(7)
                 waypoints.append(Waypoint(name, lat, lon, alt, id=id))
                 continue
-            logging.warning('unrecognized waypoint %r' % line)
+            logger.warning('unrecognized waypoint %r' % line)
     elif len(lines) > 1 and re.match(r'\Atitle,code,country,latitude,longitude,elevation,style,direction,length,frequency,description', lines[0], re.I):
         columns = re.split(r'\s*,\s*', lines[0].rstrip().lower())
         for line in lines[1:]:
@@ -278,7 +281,7 @@ def load(fp, encoding='iso-8859-1'):
                     name = name[1:-1]
                 waypoints.append(Waypoint(name, lat, lon, alt, id=id))
             except WaypointError:
-                logging.warning('unrecognized waypoint %r' % line)
+                logger.warning('unrecognized waypoint %r' % line)
     elif len(lines) >= 4 and re.match(r'\AOziExplorer\s+Waypoint\s+File\s+Version\s+\d+\.\d+\Z', lines[0]) and re.match(r'\AWGS\s+84\s*\Z', lines[1]):
         for line in lines[4:]:
             if not line:
@@ -300,7 +303,7 @@ def load(fp, encoding='iso-8859-1'):
             alt = 0.3048 * float(fields[14]) if fields[14] != '-777' else None
             waypoints.append(Waypoint(name, lat, lon, alt, color=color, id=id, radius=radius))
     else:
-        logging.error('unrecognised waypoint format %r' % lines[0])
+        logger.error('unrecognised waypoint format %r' % lines[0])
     return waypoints
 
 

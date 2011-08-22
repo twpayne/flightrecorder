@@ -29,6 +29,9 @@ from .utc import UTC
 from .waypoint import Waypoint
 
 
+logger = logging.getLogger(__name__)
+
+
 FA_FORMAT = {}
 FA_Owner            = 0x00; FA_FORMAT[FA_Owner]            = '16s'
 FA_AC_Type          = 0x01; FA_FORMAT[FA_AC_Type]          = '16s'
@@ -122,11 +125,11 @@ class Sixty15(FlightRecorderBase):
             else:
                 line = self.buffer[:index + 2]
                 self.buffer = self.buffer[index + 2:]
-                logging.info('readline %r' % line)
+                logger.info('readline %r' % line)
                 return line
 
     def write(self, line):
-        logging.info('write %r' % line)
+        logger.info('write %r' % line)
         self.io.write(line)
 
     def act1x(self, x, table):
@@ -137,11 +140,11 @@ class Sixty15(FlightRecorderBase):
                 break
             index, size = map(int, re.split(r'\s*;\s*', line))
             if index not in table:
-                logging.warning('field %d not found in table' % index)
+                logger.warning('field %d not found in table' % index)
             elif struct.calcsize(table[index]) != size:
-                logging.error('field %d expected size %d, got %d' % (index, struct.calcsize(table[index]), size))
+                logger.error('field %d expected size %d, got %d' % (index, struct.calcsize(table[index]), size))
             else:
-                logging.info('field %d size matches' % index)
+                logger.info('field %d size matches' % index)
 
     def act10(self):
         self.act1x(0x10, FA_FORMAT)

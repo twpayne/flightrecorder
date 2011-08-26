@@ -31,7 +31,7 @@ import time
 import zipfile
 
 from flightrecorder import FlightRecorder
-from flightrecorder.errors import NotAvailableError
+from flightrecorder.errors import NotAvailableError, TimeoutError
 from flightrecorder.firmware import firmware
 from flightrecorder.utc import UTC
 import flightrecorder.waypoint as waypoint
@@ -370,6 +370,8 @@ def main(argv):
     except UserError, e:
         sys.stdout.write('%s: %s\n' % (options.basename, e.message))
         return 1
+    except TimeoutError, e:
+        sys.stdout.write('%s: no flight recorder found, or timeout waiting for data\n' % options.basename)
     except NotAvailableError:
         sys.stdout.write('%s: command not available on this device\n' % options.basename)
         return 1

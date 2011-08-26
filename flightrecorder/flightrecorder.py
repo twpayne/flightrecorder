@@ -87,4 +87,4 @@ class FlightRecorder(object):
                     if re.match('(Brauniger IQ-Basic|Flytec 6015)\r\n\Z', line):
                         logger.info('read %r' % line)
                         return Sixty15(io, line)
-        raise RuntimeError # FIXME
+        raise TimeoutError

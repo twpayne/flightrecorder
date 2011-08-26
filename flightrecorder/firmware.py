@@ -134,7 +134,7 @@ class SRecordFile(object):
             data_length += incomplete
         data = ''.join(data)
         for i in xrange(0, data_length >> 8):
-            yield ((data_offset >> 8) + i, data[i * size:(i + 1) * size])
+            yield ((data_offset >> 8) + i, data[256 * i:256 * (i + 1)])
 
 
 class M32C87Error(RuntimeError):

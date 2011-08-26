@@ -342,7 +342,7 @@ class Sixty15(FlightRecorderBase):
         for i, record in enumerate(srf.records):
             self.write(record)
             self.read_flash_response()
-            yield (i, len(srf.records))
+            yield (i + 1, len(srf.records))
 
     @property
     def manufacturer(self):

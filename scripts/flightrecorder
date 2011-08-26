@@ -92,14 +92,25 @@ def fr_flash(options, args):
     elif len(args) > 1:
         raise UserError('extra arguments on command line %r' % args[1:])
     for model, srf in firmware(open(args[0])):
-        sys.stderr.write('%s: flashing   0%%' % options.basename)
-        percentage = 0
+        sys.stderr.write('%s: flashing   0%%  --:--' % options.basename)
+        percentage, remaining = 0, None
+        start = time.time()
         for i, n in fr.flash(model, srf):
             prev_percentage = percentage
             percentage = 100 * i / n
-            if percentage != prev_percentage:
-                sys.stderr.write('\b\b\b\b%3d%%' % percentage)
-        sys.stderr.write('\b\b\b\b100%\n')
+            prev_remaining = remaining
+            now = time.time()
+            if now - start < 8:
+                remaining = None
+            else:
+                remaining = (n - i) * (now - start) / i
+            if percentage != prev_percentage or remaining != prev_remaining:
+                sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b%3d%%  ' % percentage)
+                if remaining is None:
+                    sys.stderr.write('--:--')
+                else:
+                    sys.stderr.write('%02d:%02d' % divmod(remaining, 60))
+        sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(time.time() - start, 60))
         return
     raise UserError('no firmware found')
 

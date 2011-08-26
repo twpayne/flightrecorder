@@ -55,6 +55,37 @@ Run
     flightrecorder waypoints > filename.wpt
 
 
+Flashing
+--------
+
+Run
+
+    flightrecorder flash firmware-filename
+
+`firmware-filename` is the name of the file containing the firmware.  The
+program is fairly clever and can extract firmware from `.exe` files, `.zip`
+files, as well as obfuscated and unobfuscated firmware files (`.moc`).
+
+
+Getting parameters
+------------------
+
+Run
+
+    flightrecorder get parameter
+
+Valid values of `parameter` depend on the flight recorder model, but can
+include `glider_id`, `glider_type`, `pilot_name`, `recording_interval`,
+`utc_offset`, `civl_id`, and `competition_id`.
+
+
+Setting parameters
+------------------
+
+Run
+
+    flightrecorder set parameter value
+
 
 Licence
 -------

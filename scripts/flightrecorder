@@ -222,28 +222,28 @@ def fr_tracks_zip(options, args):
     zf.close()
 
 
-def fr_waypoints_delete(options, args):
+def fr_waypoints_remove(options, args):
     fr = FlightRecorder(options.device, options.model)
     if args:
         for arg in args:
-            fr.waypoint_delete(arg)
+            fr.waypoint_remove(arg)
     else:
         try:
-            fr.waypoint_delete()
+            fr.waypoint_remove()
         except NotAvailableError:
             pass
         waypoints = list(fr.waypoints())
         while waypoints:
             start = time.time()
-            sys.stderr.write('%s: deleting waypoints    0%%  --:--' % options.basename)
+            sys.stderr.write('%s: removing waypoints    0%%  --:--' % options.basename)
             for i, w in enumerate(waypoints):
-                fr.waypoint_delete(w.device_name)
+                fr.waypoint_remove(w.device_name)
                 now = time.time()
                 minutes, seconds = divmod(ceil((len(waypoints) - i - 1) * (now - start) / (i + 1)), 60)
                 sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b%3d%%  %02d:%02d' % (100 * (i + 1) / len(waypoints), minutes, seconds))
             duration = time.time() - start
             sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b100%%  %02d:%02d\n' % divmod(duration, 60))
-            sys.stderr.write('%s: %d waypoints deleted\n' % (options.basename, len(waypoints)))
+            sys.stderr.write('%s: %d waypoints removed\n' % (options.basename, len(waypoints)))
             waypoints = list(fr.waypoints())
 
 
@@ -364,7 +364,7 @@ def main(argv):
                     'zip': fr_tracks_zip},
                 'waypoints': {
                     None: fr_waypoints_download,
-                    'delete': fr_waypoints_delete,
+                    'remove': fr_waypoints_remove,
                     'download': fr_waypoints_download,
                     'upload': fr_waypoints_upload}})
     except UserError, e:

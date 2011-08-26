@@ -401,7 +401,7 @@ class Sixty15(FlightRecorderBase):
     def waypoints(self):
         return self.iact31()
 
-    def waypoint_delete(self, name=None):
+    def waypoint_remove(self, name=None):
         if name:
             raise NotAvailableError
         else:

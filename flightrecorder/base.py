@@ -55,7 +55,7 @@ class FlightRecorderBase(object):
     def waypoints(self):
         raise NotAvailableError
 
-    def waypoint_delete(self, name=None):
+    def waypoint_remove(self, name=None):
         raise NotAvailableError
 
     def waypoint_upload(self, waypoint):

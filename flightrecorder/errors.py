@@ -22,6 +22,10 @@ class Error(RuntimeError):
         self.msg = msg
 
 
+class FlashError(Error):
+    pass
+
+
 class NotAvailableError(Error):
     pass
 

@@ -20,10 +20,11 @@ from itertools import chain
 import logging
 import re
 import struct
+import time
 
 from base import FlightRecorderBase
 from common import Track, add_igc_filenames
-from errors import NotAvailableError, ProtocolError, ReadError
+from errors import FlashError, NotAvailableError, ProtocolError, ReadError
 from utc import UTC
 from waypoint import Waypoint
 
@@ -94,6 +95,9 @@ VALID_CHARS = list(chain(
     (0x5f,),
     xrange(0x61, 0x7b)))
 INVALID_CHARS_RE = re.compile(r'[^%s]+' % ''.join('\\x%02x' % c for c in VALID_CHARS))
+
+
+FLASH_RESPONSE_RE = re.compile(r'(S007Flash6015_V1F8|S0056015Wait39|S004Erase_4C|S003Done16|S004Error_32|S005NotReady74)')
 
 
 class Sixty15(FlightRecorderBase):
@@ -303,6 +307,42 @@ class Sixty15(FlightRecorderBase):
             raise ProtocolError('missing the action $82')
         else:
             raise ProtocolError('Unexpected response %r' % line)
+
+    def read_flash_response(self, expected='S003Done16', timeout=1):
+        while True:
+            m = FLASH_RESPONSE_RE.match(self.buffer)
+            if m:
+                response = m.group(1)
+                self.buffer = self.buffer[len(m.group(1)):]
+                logger.info('read %r' % response)
+                if expected and response != expected:
+                    raise FlashError('expected %r, got %r' % (expected, response))
+                return response
+            else:
+                data = self.io.read(timeout)
+                if len(data) == 0:
+                    raise ReadError
+                self.buffer += data
+
+    def flash(self, model, srf):
+        if model != '6015':
+            raise RuntimeError # FIXME
+        while True:
+            self.write('S007FlyProg_6015AA')
+            response = self.read_flash_response(None)
+            if response == 'S007Flash6015_V1F8':
+                break
+            elif response == 'S0056015Wait39':
+                time.sleep(1)
+            else:
+                raise FlashError('unexpected response %r' % response)
+        self.write('S004Erase_4C')
+        self.read_flash_response('S004Erase_4C')
+        self.read_flash_response()
+        for i, record in enumerate(srf.records):
+            self.write(record)
+            self.read_flash_response()
+            yield (i, len(srf.records))
 
     @property
     def manufacturer(self):

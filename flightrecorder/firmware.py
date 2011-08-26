@@ -78,18 +78,18 @@ class SRecordFile(object):
         self.header = None
         self.data = {}
         self.starting_executing_address = None
-        for line in lines:
-            line = line.rstrip()
-            m = S0_RE.match(line)
+        self.records = list(line.rstrip() for line in lines)
+        for record in self.records:
+            m = S0_RE.match(record)
             if m:
                 length = int(m.group(1), 16)
                 data = ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(2)))
                 checksum = int(m.group(3), 16) # FIXME check
                 if length != len(data) + 3:
-                    raise SRecordError(line)
+                    raise SRecordError(record)
                 self.header = data
                 continue
-            m = S1_RE.match(line) or S2_RE.match(line) or S3_RE.match(line)
+            m = S1_RE.match(record) or S2_RE.match(record) or S3_RE.match(record)
             if m:
                 i = int(m.group(1))
                 length = int(m.group(2), 16)
@@ -97,23 +97,23 @@ class SRecordFile(object):
                 data = ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(4)))
                 checksum = int(m.group(5), 16)
                 if length != 2 + i + len(data):
-                    raise SRecordError(line)
+                    raise SRecordError(record)
                 self.data[address] = data
                 continue
-            m = S5_RE.match(line)
+            m = S5_RE.match(record)
             if m:
                 address = int(m.group(1), 16)
                 checksum = int(m.group(2), 16)
                 if address != len(self.srecords):
-                    raise SRecordError(line)
+                    raise SRecordError(record)
                 continue
-            m = S7_RE.match(line) or S8_RE.match(line) or S9_RE.match(line)
+            m = S7_RE.match(record) or S8_RE.match(record) or S9_RE.match(record)
             if m:
                 address = int(m.group(1), 16)
                 checksum = int(m.group(2), 16)
                 self.starting_executing_address = address
                 continue
-            raise SRecordError(line)
+            raise SRecordError(record)
 
     def pages(self):
         data_offset, data, data_length = None, [], 0

@@ -10,7 +10,7 @@ Supported flight recorders
 
 Flytec: 5020, 5030, 6015, 6020, 6030
 
-Brauniger: Competino, Competino+, Compeo, Compeo+, Galileo
+Brauniger: Competino, Competino+, Compeo, Compeo+, Galileo, IQ-Basic
 
 Flymaster: B1 Nav
 
@@ -41,8 +41,6 @@ The program will attempt to detect your flight recorder.
 Uploading waypoints
 -------------------
 
-Run
-
     flightrecorder waypoint upload filename.wpt
 
 
@@ -50,15 +48,25 @@ Run
 Downloading waypoints
 ---------------------
 
-Run
-
     flightrecorder waypoints > filename.wpt
+
+
+
+Removing waypoints
+------------------
+
+To remove all waypoints, run
+
+    flightrecorder waypoints remove
+
+To remove selected waypoints, run
+
+    flightrecorder waypoints remove name1 [name2 ...]
+
 
 
 Flashing
 --------
-
-Run
 
     flightrecorder flash firmware-filename
 
@@ -67,10 +75,9 @@ program is fairly clever and can extract firmware from `.exe` files, `.zip`
 files, as well as obfuscated and unobfuscated firmware files (`.moc`).
 
 
+
 Getting parameters
 ------------------
-
-Run
 
     flightrecorder get parameter
 
@@ -79,12 +86,12 @@ include `glider_id`, `glider_type`, `pilot_name`, `recording_interval`,
 `utc_offset`, `civl_id`, and `competition_id`.
 
 
+
 Setting parameters
 ------------------
 
-Run
-
     flightrecorder set parameter value
+
 
 
 Licence

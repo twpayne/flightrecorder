@@ -1,9 +1,3 @@
-flightrecorder
-==============
-
-1. When downloading tracklogs from Brauniger IQ-Basic devices, the manufacturer in the IGC filename is set to `IQ-`, it should be `BRA`.
-
-
 Flytec 5020
 ===========
 

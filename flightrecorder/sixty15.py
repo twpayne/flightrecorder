@@ -104,6 +104,10 @@ class Sixty15(FlightRecorderBase):
 
     SUPPORTED_MODELS = '6015 IQ-BASIC'.split()
 
+    ATTRIBUTES = {
+            'Flytec 6015': {'manufacturer': 'Flytec', 'model': '6015'},
+            'IQ-Basic GPS': {'manufacturer': 'Brauniger', 'model': 'IQ-Basic'}}
+
     def __init__(self, io, line=None):
         self.io = io
         self.buffer = ''
@@ -348,13 +352,13 @@ class Sixty15(FlightRecorderBase):
     def manufacturer(self):
         if self._bd is None:
             self._bd = self.actbd()
-        return self._bd.split()[0]
+        return self.ATTRIBUTES[self._bd]['manufacturer']
 
     @property
     def model(self):
         if self._bd is None:
             self._bd = self.actbd()
-        return self._bd.split()[1]
+        return self.ATTRIBUTES[self._bd]['model']
 
     @property
     def serial_number(self):

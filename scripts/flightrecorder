@@ -155,7 +155,7 @@ def fr_tracks_download_helper(options, args, zf):
     for i, track in enumerate(fr.tracks()):
         if range_sets and not any(i + 1 in rs for rs in range_sets):
             continue
-        if zf is None and os.path.exists(track.igc_filename) and not options.overwrite:
+        if zf is None and os.path.exists(os.path.join(options.directory, track.igc_filename)) and not options.overwrite:
             sys.stderr.write('%s: skipping %s\n' % (options.basename, track.igc_filename))
             continue
         sys.stderr.write('%s: downloading %s    0%%  --:--' % (options.basename, track.igc_filename))

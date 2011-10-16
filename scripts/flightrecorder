@@ -298,7 +298,7 @@ def fr_waypoints_upload(options, args):
             if horizontal_error > fr.waypoint_precision or device_waypoint.alt != int(file_waypoint.alt):
                 inaccurate.append(file_waypoint)
                 continue
-        sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b\b%d waypoints verified' % (len(file_waypoints) - len(missing) - len(inaccurate)))
+        sys.stderr.write('\b\b\b\b\b\b\b\b\b\b\b\b%d waypoints ok' % (len(file_waypoints) - len(missing) - len(inaccurate)))
         if missing:
             sys.stderr.write(', %d missing' % len(missing))
         if inaccurate:

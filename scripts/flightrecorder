@@ -335,15 +335,15 @@ def main(argv):
     parser.add_option('-v', '--verbose', action='count', dest='level', help='show debugging information')
     parser.set_defaults(directory='.')
     parser.set_defaults(level=0)
-    for section, key, method in (
-            ('debug', 'level', ConfigParser.getint),
-            ('instrument', 'device', ConfigParser.get),
-            ('instrument', 'model', ConfigParser.get),
-            ('tracks', 'directory', lambda cp, s, k: os.path.expanduser(cp.get(s, k))),
-            ('tracks', 'overwrite', ConfigParser.getboolean),
-            ('waypoints', 'format', ConfigParser.get)):
+    for section, key, function in (
+            ('debug', 'level', config_parser.getint),
+            ('instrument', 'device', config_parser.get),
+            ('instrument', 'model', config_parser.get),
+            ('tracks', 'directory', lambda s, k: os.path.expanduser(config_parser.get(s, k))),
+            ('tracks', 'overwrite', config_parser.getboolean),
+            ('waypoints', 'format', config_parser.get)):
         try:
-            parser.set_default(key, method(config_parser, section, key))
+            parser.set_default(key, function(section, key))
         except (NoSectionError, NoOptionError):
             pass
     options, args = parser.parse_args(argv[1:])

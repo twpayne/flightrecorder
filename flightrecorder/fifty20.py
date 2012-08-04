@@ -347,7 +347,11 @@ class Fifty20(FlightRecorderBase):
         return self.ipbrwps()
 
     def waypoint_remove(self, name=None):
-        self.pbrwpx(name)
+        if name is None:
+            for name in [w.name for w in self.ipbrwps()]:
+                self.pbrwpx(name)
+        else:
+            self.pbrwpx(name)
 
     def waypoint_upload(self, waypoint):
         return self.pbrwpr(waypoint)

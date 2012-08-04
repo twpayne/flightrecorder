@@ -1,3 +1,9 @@
+flightrecorder
+==============
+
+1. Remove all waypoints doesn't work on 5020.
+
+
 Flytec 5020
 ===========
 

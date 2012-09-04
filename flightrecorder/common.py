@@ -15,6 +15,9 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import re
+
+
 def simplerepr(obj):
     keys = sorted(key for key in obj.__dict__.keys() if not key.startswith('_'))
     attrs = ''.join(' %s=%r' % (key, obj.__dict__[key]) for key in keys)
@@ -108,3 +111,40 @@ def add_igc_filenames(tracks, manufacturer, serial_number):
         track.igc_filename = '%s-%s-%d-%02d.IGC' % (track.datetime.strftime('%Y-%m-%d'), manufacturer, serial_number, index)
         date = track.datetime.date()
     return tracks
+
+
+def parse_openair(io):
+    ctr = None
+    for l in io:
+        l = l.strip()
+        if l.startswith('*'):
+            continue
+        if l.startswith('AC '):
+            ctr = CTR(None, None, None, [])
+            ac = l[3:].strip()
+        elif l.startswith('AN '):
+            ctr.name = l[3:].strip()
+        elif l.startswith('AL '):
+            al = l[3:].strip()
+        elif l.startswith('AH '):
+            ah = l[3:].strip()
+            ctr.remark = '%s %s-%s' % (ac, al, ah)
+        elif l.startswith('DP '):
+            m = re.match(r'\ADP\s+(\d+):(\d+):(\d+)\s+([NS])\s+(\d+):(\d+):(\d+)\s+([EW])\Z', l)
+            assert m is not None
+            lat = int(m.group(1)) + int(m.group(2)) / 60.0 + int(m.group(3)) / 3600.0
+            if m.group(4) == 'S':
+                lat = -lat
+            lon = int(m.group(5)) + int(m.group(6)) / 60.0 + int(m.group(7)) / 3600.0
+            if m.group(8) == 'S':
+                lon = -lon
+            ctrpoint = CTRPoint('P', lat, lon)
+            ctr.ctrpoints.append(ctrpoint)
+        elif not l:
+            if ctr:
+                yield ctr
+            ctr = None
+        else:
+            print repr(l)  # FIXME
+    if ctr:
+        yield ctr

@@ -21,7 +21,7 @@ import re
 import struct
 
 from base import FlightRecorderBase
-from common import CTR, CTRPoint, Track, add_igc_filenames
+from common import CTR, CTRPoint, Track, add_igc_filenames, simplerepr
 from errors import NotAvailableError, ProtocolError
 import nmea
 from utc import UTC
@@ -61,12 +61,6 @@ PBRSNP_RE = re.compile(r'\APBRSNP,([^,]*),([^,]*),([^,]*),([^,]*)\Z')
 PBRTL_RE = re.compile(r'\APBRTL,(\d+),(\d+),(\d+).(\d+).(\d+),(\d+):(\d+):(\d+),(\d+):(\d+):(\d+)\Z')
 PBRTLE_RE = re.compile(r'\APBRTLE,(\d+),(\d+),(\d+).(\d+).(\d+),(\d+):(\d+):(\d+),(\d+):(\d+):(\d+),(\d+),(\d+),(\d+),(\d+)')
 PBRWPS_RE = re.compile(r'\APBRWPS,(\d{2})(\d{2}\.\d{3}),([NS]),(\d{3})(\d{2}\.\d{3}),([EW]),([^,]*),([^,]*),(\d+)\Z')
-
-
-def simplerepr(obj):
-    keys = sorted(key for key in obj.__dict__.keys() if not key.startswith('_'))
-    attrs = ''.join(' %s=%r' % (key, obj.__dict__[key]) for key in keys)
-    return '<%s%s>' % (obj.__class__.__name__, attrs)
 
 
 class CTRI(object):

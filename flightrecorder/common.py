@@ -15,6 +15,12 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+def simplerepr(obj):
+    keys = sorted(key for key in obj.__dict__.keys() if not key.startswith('_'))
+    attrs = ''.join(' %s=%r' % (key, obj.__dict__[key]) for key in keys)
+    return '<%s%s>' % (obj.__class__.__name__, attrs)
+
+
 class CTR(object):
 
     def __init__(self, name, warning_distance, remark, ctrpoints):
@@ -30,6 +36,8 @@ class CTR(object):
         json['remark'] = self.remark
         json['points'] = [ctrpoint.to_json() for ctrpoint in self.ctrpoints]
         return json
+
+    __repr__ = simplerepr
 
 
 class CTRPoint(object):
@@ -52,6 +60,7 @@ class CTRPoint(object):
             json['clockwise'] = self.clockwise
         return json
 
+    __repr__ = simplerepr
 
 
 class Track(object):

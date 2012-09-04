@@ -55,6 +55,12 @@ PBRTLE_RE = re.compile(r'\APBRTLE,(\d+),(\d+),(\d+).(\d+).(\d+),(\d+):(\d+):(\d+
 PBRWPS_RE = re.compile(r'\APBRWPS,(\d{2})(\d{2}\.\d{3}),([NS]),(\d{3})(\d{2}\.\d{3}),([EW]),([^,]*),([^,]*),(\d+)\Z')
 
 
+def simplerepr(obj):
+    keys = sorted(key for key in obj.__dict__.keys() if not key.startswith('_'))
+    attrs = ''.join(' %s=%r' % (key, obj.__dict__[key]) for key in keys)
+    return '<%s%s>' % (obj.__class__.__name__, attrs)
+
+
 class Route(object):
 
     def __init__(self, index, name, routepoints):
@@ -62,12 +68,16 @@ class Route(object):
         self.name = name
         self.routepoints = routepoints
 
+    __repr__ = simplerepr
+
 
 class Routepoint(object):
 
     def __init__(self, short_name, long_name):
         self.short_name = short_name
         self.long_name = long_name
+
+    __repr__ = simplerepr
 
 
 class SNP(object):
@@ -77,6 +87,8 @@ class SNP(object):
         self.pilot_name = pilot_name.strip()
         self.serial_number = int(serial_number)
         self.software_version = software_version
+
+    __repr__ = simplerepr
 
 
 class Fifty20(FlightRecorderBase):

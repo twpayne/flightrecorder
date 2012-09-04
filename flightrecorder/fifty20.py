@@ -240,6 +240,32 @@ class Fifty20(FlightRecorderBase):
     def pbrctri(self):
         return CTRI(*map(int, self.one('PBRCTRI', PBRCTRI_RE).groups()))
 
+    def pbrctrw(self, ctr, warning_distance):
+        n = 2 + len(ctr.ctrpoints)
+        self.none('PBRCTRW,%03d,000,%s,%04d' % (n, ctr.name[:17].ljust(17), ctr.warning_distance or warning_distance))
+        self.none('PBRCTRW,%03d,001,%s' % (n, ctr.remark[:17].ljust(17)))
+        for i, ctrpoint in enumerate(ctr.ctrpoints):
+            command = 'PBRCTRW,%03d,%03d,%s,%02d%06.3f,%s,%03d%06.3f,%s' % (
+                    n,
+                    i + 2,
+                    ctrpoint.type,
+                    abs(60 * ctrpoint.lat) / 60,
+                    abs(60 * ctrpoint.lat) % 60,
+                    'S' if ctrpoint.lat < 0 else 'N',
+                    abs(60 * ctrpoint.lon) / 60,
+                    abs(60 * ctrpoint.lon) % 60,
+                    'W' if ctrpoint.lon < 0 else 'E')
+            if ctrpoint.type == 'C':
+                command += ',%04d' % (ctrpoint.radius,)
+            elif ctrpoint.type in ('T', 'Z'):
+                command += ',%s' % ('+' if ctrpoint.clockwise else '-',)
+            if i == len(ctr.ctrpoints) - 1:
+                status = int(self.one(command, PBRANS_RE).group(1))
+                if status != 1:
+                    raise ProtocolError('status == %d' % (status,))
+            else:
+                self.none(command)
+
     def ipbrigc(self):
         return self.ieach('PBRIGC,')
 
@@ -409,6 +435,9 @@ class Fifty20(FlightRecorderBase):
 
     def ctrs(self):
         return self.ipbrctr()
+
+    def ctr_upload(self, ctr, warning_distance):
+        self.pbrctrw(ctr, warning_distance)
 
     def get(self, key):
         if key not in MEMORY_MAP:

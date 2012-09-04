@@ -40,6 +40,15 @@ class FlightRecorderBase(object):
     def pilot_name(self):
         raise NotAvailableError
 
+    def ctri(self):
+        raise NotAvailableError
+
+    def ctrs(self):
+        raise NotAvailableError
+
+    def ctr_upload(self, ctr, warning_distance):
+        raise NotAvailableError
+
     def flash(self, model, srf):
         raise NotAvailableError
 

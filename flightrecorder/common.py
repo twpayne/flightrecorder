@@ -15,6 +15,45 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+class CTR(object):
+
+    def __init__(self, name, warning_distance, remark, ctrpoints):
+        self.name = name
+        self.warning_distance = warning_distance
+        self.remark = remark
+        self.ctrpoints = ctrpoints
+
+    def to_json(self):
+        json = {}
+        json['name'] = self.name
+        json['warning_distance'] = self.warning_distance
+        json['remark'] = self.remark
+        json['points'] = [ctrpoint.to_json() for ctrpoint in self.ctrpoints]
+        return json
+
+
+class CTRPoint(object):
+
+    def __init__(self, type, lat, lon, radius=None, clockwise=None):
+        self.type = type
+        self.lat = lat
+        self.lon = lon
+        self.radius = radius
+        self.clockwise = clockwise
+
+    def to_json(self):
+        json = {}
+        json['type'] = self.type
+        json['lat'] = self.lat
+        json['lon'] = self.lon
+        if self.type == 'C':
+            json['radius'] = self.radius
+        elif self.type in ('T', 'Z'):
+            json['clockwise'] = self.clockwise
+        return json
+
+
+
 class Track(object):
 
     def __init__(self, **kwargs):

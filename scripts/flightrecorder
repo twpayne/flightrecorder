@@ -85,6 +85,26 @@ def distance_between(w1, w2):
     return 6371000.0 * acos(d) if d < 1.0 else 0.0
 
 
+def fr_ctr_download(options, args):
+    fr = FlightRecorder(options.device, options.model)
+    if args:
+        raise UserError('extra arguments on command line %r' % args)
+    json.dump([ctr.to_json() for ctr in fr.ctrs()], sys.stdout, indent=4, sort_keys=True)
+    sys.stdout.write('\n')
+
+
+def fr_ctr_information(options, args):
+    fr = FlightRecorder(options.device, options.model)
+    if args:
+        raise UserError('extra arguments on command line %r' % args)
+    ctri = fr.ctri()
+    print '%s: actual %d, maximum %d, free %d' % (options.basename, ctri.actual, ctri.maximum, ctri.free)
+
+
+def fr_ctr_upload(options, args):
+    raise NotImplementedError
+
+
 def fr_flash(options, args):
     fr = FlightRecorder(options.device, options.model)
     if not args:
@@ -352,6 +372,11 @@ def main(argv):
     try:
         execute(options, args, {
                 None: fr_tracks_download,
+                'ctr': {
+                    None: fr_ctr_download,
+                    'download': fr_ctr_download,
+                    'information': fr_ctr_information,
+                    'upload': fr_ctr_upload},
                 'flash': fr_flash,
                 'get': fr_get,
                 'id': fr_id,

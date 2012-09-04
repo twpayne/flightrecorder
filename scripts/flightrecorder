@@ -31,6 +31,7 @@ import time
 import zipfile
 
 from flightrecorder import FlightRecorder
+from flightrecorder.common import parse_openair
 from flightrecorder.errors import NotAvailableError, TimeoutError
 from flightrecorder.firmware import firmware
 from flightrecorder.utc import UTC
@@ -102,7 +103,11 @@ def fr_ctr_information(options, args):
 
 
 def fr_ctr_upload(options, args):
-    raise NotImplementedError
+    fr = FlightRecorder(options.device, options.model)
+    for arg in args:
+        for ctr in parse_openair(open(arg)):
+            print '%s: uploading %s' % (options.basename, ctr.name)
+            fr.ctr_upload(ctr, options.warning_distance)
 
 
 def fr_flash(options, args):
@@ -353,8 +358,10 @@ def main(argv):
     parser.add_option('-o', '--overwrite', action='store_true', help='re-download already downloaded tracklogs')
     parser.add_option('-m', '--model', metavar='TYPE', type='choice', choices=FlightRecorder.SUPPORTED_MODELS, help='set device type')
     parser.add_option('-v', '--verbose', action='count', dest='level', help='show debugging information')
+    parser.add_option('-w', '--warning-distance', metavar='METERS', type=int, help='warning distance')
     parser.set_defaults(directory='.')
     parser.set_defaults(level=0)
+    parser.set_defaults(warning_distance=2000)
     for section, key, function in (
             ('debug', 'level', config_parser.getint),
             ('instrument', 'device', config_parser.get),

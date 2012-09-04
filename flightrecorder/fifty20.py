@@ -21,7 +21,7 @@ import re
 import struct
 
 from base import FlightRecorderBase
-from common import Track, add_igc_filenames
+from common import CTR, CTRPoint, Track, add_igc_filenames
 from errors import NotAvailableError, ProtocolError
 import nmea
 from utc import UTC
@@ -46,6 +46,14 @@ MEMORY_MAP = {
 XON = '\021'
 XOFF = '\023'
 
+PBRANS_RE = re.compile(r'\APBRANS,(\d+)\Z')
+PBRCTR_RE1 = re.compile(r'\APBRCTR,(\d+),0+,([^,]*),(\d+)\Z')
+PBRCTR_RE2 = re.compile(r'\APBRCTR,(\d+),0*1,([^,]*)\Z')
+PBRCTR_RE3 = re.compile(r'\APBRCTR,(\d+),(\d+),([CPTXZ]),(\d{2})(\d{2}\.\d{3}),([NS]),(\d{3})(\d{2}\.\d{3}),([EW])')
+PBRCTR_PX_RE = re.compile(r'\APBRCTR,\d+,\d+,[PX],\d{4}\.\d{3},[NS],\d{5}\.\d{3},[EW]\Z')
+PBRCTR_C_RE = re.compile(r'\APBRCTR,\d+,\d+,C,\d{4}\.\d{3},[NS],\d{5}\.\d{3},[EW],(\d+)\Z')
+PBRCTR_TZ_RE = re.compile(r'\APBRCTR,\d+,\d+,[TZ],\d{4}\.\d{3},[NS],\d{5}\.\d{3},[EW],([+\-])\Z')
+PBRCTRI_RE = re.compile(r'\APBRCTRI,(\d+),(\d+),(\d+)\Z')
 PBRMEMR_RE = re.compile(r'\APBRMEMR,([0-9A-F]+),([0-9A-F]+(?:,[0-9A-F]+)*)\Z')
 PBRRTS_RE1 = re.compile(r'\APBRRTS,(\d+),(\d+),0+,(.*)\Z')
 PBRRTS_RE2 = re.compile(r'\APBRRTS,(\d+),(\d+),(\d+),([^,]*),(.*?)\Z')
@@ -59,6 +67,18 @@ def simplerepr(obj):
     keys = sorted(key for key in obj.__dict__.keys() if not key.startswith('_'))
     attrs = ''.join(' %s=%r' % (key, obj.__dict__[key]) for key in keys)
     return '<%s%s>' % (obj.__class__.__name__, attrs)
+
+
+class CTRI(object):
+
+    def __init__(self, actual, maximum, free):
+        self.actual = actual
+        self.maximum = maximum
+        self.free = free
+
+    __repr__ = simplerepr
+
+    __repr__ = simplerepr
 
 
 class Route(object):
@@ -166,6 +186,65 @@ class Fifty20(FlightRecorderBase):
     def pbrconf(self):
         self.none('PBRCONF,', None)
         self._snp = None
+
+    def ipbrctr(self):
+        for l in self.ieach('PBRCTR,'):
+            l = l.decode('nmea_sentence')
+            m = PBRCTR_RE1.match(l)
+            if m:
+                count, name, warning_distance = int(m.group(1)), m.group(2), int(m.group(3))
+                remark = None
+                ctrpoints = []
+                continue
+            m = PBRCTR_RE2.match(l)
+            if m:
+                if int(m.group(1)) != count:
+                    raise ProtocolError('count mismatch')
+                remark = m.group(2)
+                continue
+            m = PBRCTR_RE3.match(l)
+            if m:
+                if int(m.group(1)) != count:
+                    raise ProtocolError('count mismatch')
+                index, type = int(m.group(2)), m.group(3)
+                lat = int(m.group(4)) + float(m.group(5)) / 60
+                if m.group(6) == 'S':
+                    lat *= -1
+                lon = int(m.group(7)) + float(m.group(8)) / 60
+                if m.group(9) == 'W':
+                    lon *= -1
+                radius, clockwise = None, None
+                if type in ('P', 'X'):
+                    m = PBRCTR_PX_RE.match(l)
+                    if not m:
+                        raise ProtocolError(l)
+                elif type == 'C':
+                    m = PBRCTR_C_RE.match(l)
+                    if not m:
+                        raise ProtocolError(l)
+                    radius = int(m.group(1))
+                elif type in ('T', 'Z'):
+                    m = PBRCTR_TZ_RE.match(l)
+                    if not m:
+                        raise ProtocolError(l)
+                    clockwise = m.group(1) == '+'
+                else:
+                    raise ProtocolError(l)
+                ctrpoint = CTRPoint(type, lat, lon, radius, clockwise)
+                ctrpoints.append(ctrpoint)
+                if index == count - 1:
+                    yield CTR(name, warning_distance, remark, ctrpoints)
+                continue
+            m = PBRANS_RE.match(l)
+            if m:
+                status = int(m.group(1))
+                if status != 1:
+                    raise RuntimeError(l)  # FIXME
+                continue
+            logger.warning('unexpected response %r', l)
+
+    def pbrctri(self):
+        return CTRI(*map(int, self.one('PBRCTRI', PBRCTRI_RE).groups()))
 
     def ipbrigc(self):
         return self.ieach('PBRIGC,')
@@ -330,6 +409,12 @@ class Fifty20(FlightRecorderBase):
         if self._snp is None:
             self._snp = self.pbrsnp()
         return self._snp
+
+    def ctri(self):
+        return self.pbrctri()
+
+    def ctrs(self):
+        return self.ipbrctr()
 
     def get(self, key):
         if key not in MEMORY_MAP:

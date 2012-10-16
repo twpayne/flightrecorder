@@ -20,7 +20,7 @@ Installation
 
 Run:
 
-    sudo python setup.py install
+    pip install flightrecorder
 
 
 Usage

@@ -136,7 +136,7 @@ def parse_openair(io):
             if m.group(4) == 'S':
                 lat = -lat
             lon = int(m.group(5)) + int(m.group(6)) / 60.0 + int(m.group(7)) / 3600.0
-            if m.group(8) == 'S':
+            if m.group(8) == 'W':
                 lon = -lon
             ctrpoint = CTRPoint('P', lat, lon)
             ctr.ctrpoints.append(ctrpoint)

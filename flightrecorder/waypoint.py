@@ -102,32 +102,32 @@ def dump(waypoints, file, format='formatgeo'):
         file.write(u'U  1\r\n')
         for waypoint in waypoints:
             file.write((u'W  %6s A %.10f\u00ba%s %.10f\u00ba%s 27-MAR-62 00:00:00 %f %s\r\n' % (
-                    waypoint.get_id(),
-                    abs(waypoint.lat),
-                    'S' if waypoint.lat < 0 else 'N',
-                    abs(waypoint.lon),
-                    'W' if waypoint.lon < 0 else 'E',
-                    waypoint.alt or -9999.0,
-                    waypoint.name)).encode('iso-8859-1'))
+                waypoint.get_id(),
+                abs(waypoint.lat),
+                'S' if waypoint.lat < 0 else 'N',
+                abs(waypoint.lon),
+                'W' if waypoint.lon < 0 else 'E',
+                waypoint.alt or -9999.0,
+                waypoint.name)).encode('iso-8859-1'))
             color = None if waypoint.color is None else int(waypoint.color[1:], 16)
             file.write(u'w Waypoint,0,-1.0,16777215,%s,1,7,%s\r\n' % (
-                    '' if color is None else str(((color & 0xff) << 16) + (color & 0xff00) + (color >> 16)),
-                    '' if waypoint.radius is None else str(waypoint.radius)))
+                '' if color is None else str(((color & 0xff) << 16) + (color & 0xff00) + (color >> 16)),
+                '' if waypoint.radius is None else str(waypoint.radius)))
     elif format == 'formatgeo':
         file.write(u'$FormatGEO\r\n')
         for waypoint in waypoints:
             file.write(u'%-6s    %s %02d %02d %05.2f    %s %03d %02d %05.2f  %4d  %s\r\n' % (
-                    waypoint.get_id(),
-                    'S' if waypoint.lat < 0 else 'N',
-                    abs(waypoint.lat),
-                    (60 * abs(waypoint.lat)) % 60,
-                    (3600 * abs(waypoint.lat)) % 60,
-                    'W' if waypoint.lon < 0 else 'E',
-                    abs(waypoint.lon),
-                    (60 * abs(waypoint.lon)) % 60,
-                    (3600 * abs(waypoint.lon)) % 60,
-                    waypoint.alt or 0,
-                    waypoint.name))
+                waypoint.get_id(),
+                'S' if waypoint.lat < 0 else 'N',
+                abs(waypoint.lat),
+                (60 * abs(waypoint.lat)) % 60,
+                (3600 * abs(waypoint.lat)) % 60,
+                'W' if waypoint.lon < 0 else 'E',
+                abs(waypoint.lon),
+                (60 * abs(waypoint.lon)) % 60,
+                (3600 * abs(waypoint.lon)) % 60,
+                waypoint.alt or 0,
+                waypoint.name))
     elif format == 'oziexplorer':
         file.write(u'OziExplorer Waypoint File Version 1.0\r\n')
         file.write(u'WGS 84\r\n')
@@ -136,27 +136,27 @@ def dump(waypoints, file, format='formatgeo'):
         for i, waypoint in enumerate(waypoints):
             color = None if waypoint.color is None else int(waypoint.color[1:], 16)
             file.write(u'%d,%s,%f,%f,,,1,,%s,,%s,,,%s,%s\r\n' % (
-                    i + 1,
-                    waypoint.get_id(),
-                    waypoint.lat,
-                    waypoint.lon,
-                    '%d' % (((color & 0xff) << 16) + (color & 0xff00) + (color >> 16)) if color is not None else '',
-                    waypoint.name,
-                    '' if waypoint.radius is None else str(waypoint.radius),
-                    '-777' if waypoint.alt is None else str(waypoint.alt / 0.3048)))
+                i + 1,
+                waypoint.get_id(),
+                waypoint.lat,
+                waypoint.lon,
+                '%d' % (((color & 0xff) << 16) + (color & 0xff00) + (color >> 16)) if color is not None else '',
+                waypoint.name,
+                '' if waypoint.radius is None else str(waypoint.radius),
+                '-777' if waypoint.alt is None else str(waypoint.alt / 0.3048)))
     elif format == 'seeyou':
         file.write(u'title,code,country,latitude,longitude,elevation,style,direction,length,frequency,description\r\n')
         for waypoint in waypoints:
             file.write(u'"%s","%s",,%02d%06.3f%s,%03d%06.3f%s,%s,,,,,\r\n' % (
-                    waypoint.name,
-                    waypoint.get_id(),
-                    abs(waypoint.lat),
-                    (60 * abs(waypoint.lat)) % 60,
-                    'S' if waypoint.lat < 0 else 'N',
-                    abs(waypoint.lon),
-                    (60 * abs(waypoint.lon)) % 60,
-                    'W' if waypoint.lon < 0 else 'E',
-                    '' if waypoint.alt is None else '%fm' % waypoint.alt))
+                waypoint.name,
+                waypoint.get_id(),
+                abs(waypoint.lat),
+                (60 * abs(waypoint.lat)) % 60,
+                'S' if waypoint.lat < 0 else 'N',
+                abs(waypoint.lon),
+                (60 * abs(waypoint.lon)) % 60,
+                'W' if waypoint.lon < 0 else 'E',
+                '' if waypoint.alt is None else '%fm' % waypoint.alt))
 
 
 def load(fp, encoding='iso-8859-1'):

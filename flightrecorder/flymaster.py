@@ -41,7 +41,6 @@ PFMWPR_RE = re.compile(r'PFMWPR,ACK,([^,]*)\Z')
 TRAILING_NULS_RE = re.compile(r'\x00+')
 
 
-
 class Packet(object):
 
     def __init__(self, id, data):
@@ -192,7 +191,7 @@ class Flymaster(FlightRecorderBase):
             for m in self.ieach('PFMCFG,', PFMCFG_RE):
                 yield m.groups()
         except TimeoutError:
-            pass # FIXME
+            pass  # FIXME
 
     def pfmcfg(self):
         return dict(self.ipfmcfg())
@@ -217,12 +216,12 @@ class Flymaster(FlightRecorderBase):
                     date = packet.dt.date()
                 lat, lon, alt, pressure, dt = packet.lat, packet.lon, packet.alt, packet.pressure, packet.dt
                 yield 'B%s%02d%02d%03d%c%03d%02d%03d%c%c%05d%05d\r\n' % (
-                        dt.strftime('%H%M%S'),
-                        abs(lat) / 60000, (abs(lat) % 60000) / 1000, abs(lat) % 1000, 'S' if lat < 0 else 'N',
-                        abs(lon) / 60000, (abs(lon) % 60000) / 1000, abs(lon) % 1000, 'E' if lon < 0 else 'W',
-                        'A' if packet.fix_flag & 0x80 else 'V',
-                        Flymaster.pressure_altitude(pressure),
-                        alt)
+                    dt.strftime('%H%M%S'),
+                    abs(lat) / 60000, (abs(lat) % 60000) / 1000, abs(lat) % 1000, 'S' if lat < 0 else 'N',
+                    abs(lon) / 60000, (abs(lon) % 60000) / 1000, abs(lon) % 1000, 'E' if lon < 0 else 'W',
+                    'A' if packet.fix_flag & 0x80 else 'V',
+                    Flymaster.pressure_altitude(pressure),
+                    alt)
             elif isinstance(packet, TrackPositionRecordDeltas):
                 if lat is None:
                     logger.debug('Track position record delta received before key track position record' % packet)
@@ -237,15 +236,16 @@ class Flymaster(FlightRecorderBase):
                         yield 'HFDTE%s\r\n' % dt.strftime('%d%m%y')
                         date = dt.date()
                     yield 'B%s%02d%02d%03d%c%03d%02d%03d%c%c%05d%05d\r\n' % (
-                            dt.strftime('%H%M%S'),
-                            abs(lat) / 60000, (abs(lat) % 60000) / 1000, abs(lat) % 1000, 'S' if lat < 0 else 'N',
-                            abs(lon) / 60000, (abs(lon) % 60000) / 1000, abs(lon) % 1000, 'E' if lon < 0 else 'W',
-                            'A' if tprd.fix_flag & 0x80 else 'V',
-                            Flymaster.pressure_altitude(pressure),
-                            alt)
+                        dt.strftime('%H%M%S'),
+                        abs(lat) / 60000, (abs(lat) % 60000) / 1000, abs(lat) % 1000, 'S' if lat < 0 else 'N',
+                        abs(lon) / 60000, (abs(lon) % 60000) / 1000, abs(lon) % 1000, 'E' if lon < 0 else 'W',
+                        'A' if tprd.fix_flag & 0x80 else 'V',
+                        Flymaster.pressure_altitude(pressure),
+                        alt)
 
     def pfmdnl_lst(self):
         tracks = []
+
         def igc_lambda(self, dt):
             return lambda: self.igc_helper(self.ipfmdnl(dt))
         for m in self.ieach('PFMDNL,LST,', PFMDNL_LST_RE):
@@ -290,7 +290,7 @@ class Flymaster(FlightRecorderBase):
                 airfield = bool(int(m.group(7)))
                 yield Waypoint(name, lat, lon, alt, airfield=airfield)
         except TimeoutError:
-            pass # FIXME
+            pass  # FIXME
 
     def pfmwpl(self):
         return list(self.ipfmwpl())

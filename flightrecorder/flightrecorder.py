@@ -31,13 +31,13 @@ logger = logging.getLogger(__name__)
 
 
 DEVICE_GLOBS = {
-        'Darwin': (
-            '/dev/cu.PL2303*',
-            '/dev/cu.usbserial*',),
-        'FreeBSD': (
-            '/dev/cuad*',),
-        'Linux': (
-            '/dev/ttyUSB*',)}
+    'Darwin': (
+        '/dev/cu.PL2303*',
+        '/dev/cu.usbserial*',),
+    'FreeBSD': (
+        '/dev/cuad*',),
+    'Linux': (
+        '/dev/ttyUSB*',)}
 
 
 class FlightRecorder(object):
@@ -51,7 +51,7 @@ class FlightRecorder(object):
             device_globs = DEVICE_GLOBS.get(os.uname()[0], ())
             devices = list(filename for device_glob in device_globs for filename in sorted(glob(device_glob)))
         if model is not None and model not in FlightRecorder.SUPPORTED_MODELS:
-            raise RuntimeError # FIXME
+            raise RuntimeError  # FIXME
         for device in devices:
             try:
                 io = SerialIO(device)

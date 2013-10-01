@@ -33,58 +33,102 @@ logger = logging.getLogger(__name__)
 
 
 FA_FORMAT = {}
-FA_Owner            = 0x00; FA_FORMAT[FA_Owner]            = '16s'
-FA_AC_Type          = 0x01; FA_FORMAT[FA_AC_Type]          = '16s'
-FA_AC_ID            = 0x02; FA_FORMAT[FA_AC_ID]            = '16s'
-FA_Units            = 0x03; FA_FORMAT[FA_Units]            = 'H'
-FA_DiverseFlag      = 0x04; FA_FORMAT[FA_DiverseFlag]      = 'H'
-FA_FiltTyp          = 0x05; FA_FORMAT[FA_FiltTyp]          = 'B'
-FA_Alt1Diff         = 0x06; FA_FORMAT[FA_Alt1Diff]         = 'l'
-FA_VarioDigFk       = 0x07; FA_FORMAT[FA_VarioDigFk]       = 'B'
-FA_BFreqRise        = 0x08; FA_FORMAT[FA_BFreqRise]        = 'H'
-FA_BFreqSink        = 0x09; FA_FORMAT[FA_BFreqSink]        = 'H'
-FA_AudioRise        = 0x0a; FA_FORMAT[FA_AudioRise]        = 'h'
-FA_AudioSink        = 0x0b; FA_FORMAT[FA_AudioSink]        = 'h'
-FA_SinkAlarm        = 0x0c; FA_FORMAT[FA_SinkAlarm]        = 'h'
-FA_FreqGain         = 0x0d; FA_FORMAT[FA_FreqGain]         = 'B'
-FA_PitchGain        = 0x0e; FA_FORMAT[FA_PitchGain]        = 'B'
-FA_MaxRiseRejection = 0x0f; FA_FORMAT[FA_MaxRiseRejection] = 'H'
-FA_VarioMinMaxFk    = 0x10; FA_FORMAT[FA_VarioMinMaxFk]    = 'B'
-FA_RecIntervall     = 0x11; FA_FORMAT[FA_RecIntervall]     = 'B'
-FA_AudioVolume      = 0x12; FA_FORMAT[FA_AudioVolume]      = 'B'
-FA_UTC_Offset       = 0x13; FA_FORMAT[FA_UTC_Offset]       = 'b'
-FA_PressOffset      = 0x14; FA_FORMAT[FA_PressOffset]      = 'l'
-FA_ThermThreshold   = 0x15; FA_FORMAT[FA_ThermThreshold]   = 'h'
-FA_PowerOffTime     = 0x16; FA_FORMAT[FA_PowerOffTime]     = 'B'
-FA_StallSpeed       = 0x1a; FA_FORMAT[FA_StallSpeed]       = 'H'
-FA_WindWheelGain    = 0x1c; FA_FORMAT[FA_WindWheelGain]    = 'B'
-FA_PreThermalThr    = 0x22; FA_FORMAT[FA_PreThermalThr]    = 'h'
+FA_Owner = 0x00
+FA_FORMAT[FA_Owner] = '16s'
+FA_AC_Type = 0x01
+FA_FORMAT[FA_AC_Type] = '16s'
+FA_AC_ID = 0x02
+FA_FORMAT[FA_AC_ID] = '16s'
+FA_Units = 0x03
+FA_FORMAT[FA_Units] = 'H'
+FA_DiverseFlag = 0x04
+FA_FORMAT[FA_DiverseFlag] = 'H'
+FA_FiltTyp = 0x05
+FA_FORMAT[FA_FiltTyp] = 'B'
+FA_Alt1Diff = 0x06
+FA_FORMAT[FA_Alt1Diff] = 'l'
+FA_VarioDigFk = 0x07
+FA_FORMAT[FA_VarioDigFk] = 'B'
+FA_BFreqRise = 0x08
+FA_FORMAT[FA_BFreqRise] = 'H'
+FA_BFreqSink = 0x09
+FA_FORMAT[FA_BFreqSink] = 'H'
+FA_AudioRise = 0x0a
+FA_FORMAT[FA_AudioRise] = 'h'
+FA_AudioSink = 0x0b
+FA_FORMAT[FA_AudioSink] = 'h'
+FA_SinkAlarm = 0x0c
+FA_FORMAT[FA_SinkAlarm] = 'h'
+FA_FreqGain = 0x0d
+FA_FORMAT[FA_FreqGain] = 'B'
+FA_PitchGain = 0x0e
+FA_FORMAT[FA_PitchGain] = 'B'
+FA_MaxRiseRejection = 0x0f
+FA_FORMAT[FA_MaxRiseRejection] = 'H'
+FA_VarioMinMaxFk = 0x10
+FA_FORMAT[FA_VarioMinMaxFk] = 'B'
+FA_RecIntervall = 0x11
+FA_FORMAT[FA_RecIntervall] = 'B'
+FA_AudioVolume = 0x12
+FA_FORMAT[FA_AudioVolume] = 'B'
+FA_UTC_Offset = 0x13
+FA_FORMAT[FA_UTC_Offset] = 'b'
+FA_PressOffset = 0x14
+FA_FORMAT[FA_PressOffset] = 'l'
+FA_ThermThreshold = 0x15
+FA_FORMAT[FA_ThermThreshold] = 'h'
+FA_PowerOffTime = 0x16
+FA_FORMAT[FA_PowerOffTime] = 'B'
+FA_StallSpeed = 0x1a
+FA_FORMAT[FA_StallSpeed] = 'H'
+FA_WindWheelGain = 0x1c
+FA_FORMAT[FA_WindWheelGain] = 'B'
+FA_PreThermalThr = 0x22
+FA_FORMAT[FA_PreThermalThr] = 'h'
 
 FA_MAP = {
-        'pilot_name': FA_Owner,
-        'glider_type': FA_AC_Type,
-        'glider_id': FA_AC_ID,
-        'utc_offset': FA_UTC_Offset}
+    'pilot_name': FA_Owner,
+    'glider_type': FA_AC_Type,
+    'glider_id': FA_AC_ID,
+    'utc_offset': FA_UTC_Offset}
 
 PA_FORMAT = {}
-PA_DeviceNr         = 0x00; PA_FORMAT[PA_DeviceNr]         = 'I'
-PA_DeviceTyp        = 0x01; PA_FORMAT[PA_DeviceTyp]        = 'B'
-PA_SoftVers         = 0x02; PA_FORMAT[PA_SoftVers]         = 'H'
-PA_KalibType        = 0x03; PA_FORMAT[PA_KalibType]        = 'B'
-PA_Filt1_K          = 0x04; PA_FORMAT[PA_Filt1_K]          = '4B'
-PA_Filt2_K          = 0x05; PA_FORMAT[PA_Filt2_K]          = '4B'
-PA_Filt4_K          = 0x06; PA_FORMAT[PA_Filt4_K]          = '4B'
-PA_AudioHyst        = 0x07; PA_FORMAT[PA_AudioHyst]        = '4B'
-PA_AudioRsThrFaktor = 0x08; PA_FORMAT[PA_AudioRsThrFaktor] = '4B'
-PA_BattLevel1       = 0x09; PA_FORMAT[PA_BattLevel1]       = '10B'
-PA_BattLevel2       = 0x0a; PA_FORMAT[PA_BattLevel2]       = '10B'
-PA_BattLevel3       = 0x0b; PA_FORMAT[PA_BattLevel3]       = '10B'
-PA_AltiDiff_FLA     = 0x0c; PA_FORMAT[PA_AltiDiff_FLA]     = 'l'
-PA_Vario_FLA        = 0x0d; PA_FORMAT[PA_Vario_FLA]        = 'h'
-PA_Speed_FLA        = 0x0e; PA_FORMAT[PA_Speed_FLA]        = 'H'
-PA_MemoStartDelay   = 0x0f; PA_FORMAT[PA_MemoStartDelay]   = 'B'
-PA_Vario_FLE        = 0x10; PA_FORMAT[PA_Vario_FLE]        = 'h'
-PA_Speed_FLE        = 0x11; PA_FORMAT[PA_Speed_FLE]        = 'H'
+PA_DeviceNr = 0x00
+PA_FORMAT[PA_DeviceNr] = 'I'
+PA_DeviceTyp = 0x01
+PA_FORMAT[PA_DeviceTyp] = 'B'
+PA_SoftVers = 0x02
+PA_FORMAT[PA_SoftVers] = 'H'
+PA_KalibType = 0x03
+PA_FORMAT[PA_KalibType] = 'B'
+PA_Filt1_K = 0x04
+PA_FORMAT[PA_Filt1_K] = '4B'
+PA_Filt2_K = 0x05
+PA_FORMAT[PA_Filt2_K] = '4B'
+PA_Filt4_K = 0x06
+PA_FORMAT[PA_Filt4_K] = '4B'
+PA_AudioHyst = 0x07
+PA_FORMAT[PA_AudioHyst] = '4B'
+PA_AudioRsThrFaktor = 0x08
+PA_FORMAT[PA_AudioRsThrFaktor] = '4B'
+PA_BattLevel1 = 0x09
+PA_FORMAT[PA_BattLevel1] = '10B'
+PA_BattLevel2 = 0x0a
+PA_FORMAT[PA_BattLevel2] = '10B'
+PA_BattLevel3 = 0x0b
+PA_FORMAT[PA_BattLevel3] = '10B'
+PA_AltiDiff_FLA = 0x0c
+PA_FORMAT[PA_AltiDiff_FLA] = 'l'
+PA_Vario_FLA = 0x0d
+PA_FORMAT[PA_Vario_FLA] = 'h'
+PA_Speed_FLA = 0x0e
+PA_FORMAT[PA_Speed_FLA] = 'H'
+PA_MemoStartDelay = 0x0f
+PA_FORMAT[PA_MemoStartDelay] = 'B'
+PA_Vario_FLE = 0x10
+PA_FORMAT[PA_Vario_FLE] = 'h'
+PA_Speed_FLE = 0x11
+PA_FORMAT[PA_Speed_FLE] = 'H'
 
 
 VALID_CHARS = list(chain(
@@ -105,8 +149,8 @@ class Sixty15(FlightRecorderBase):
     SUPPORTED_MODELS = '6015 IQ-BASIC'.split()
 
     ATTRIBUTES = {
-            'Flytec 6015': {'manufacturer': 'Flytec', 'model': '6015'},
-            'IQ-Basic GPS': {'manufacturer': 'Brauniger', 'model': 'IQ-Basic'}}
+        'Flytec 6015': {'manufacturer': 'Flytec', 'model': '6015'},
+        'IQ-Basic GPS': {'manufacturer': 'Brauniger', 'model': 'IQ-Basic'}}
 
     def __init__(self, io, line=None):
         self.io = io
@@ -165,6 +209,7 @@ class Sixty15(FlightRecorderBase):
         if re.match('\A\s*No\s+Data\s*\r\n\Z', line):
             return []
         tracks = []
+
         def igc_lambda(self, index):
             return lambda: self.iact21(index)
         while True:
@@ -176,20 +221,20 @@ class Sixty15(FlightRecorderBase):
             hour, minute, second = (int(x) for x in fields[2].split(':'))
             hours, minutes, seconds = (int(x) for x in fields[4].split(':'))
             tracks.append(Track(
-                    index=index,
-                    datetime=datetime.datetime(year + 2000, month, day, hour, minute, second, tzinfo=UTC()),
-                    utc_offset=int(fields[3]),
-                    duration=datetime.timedelta(seconds=3600 * hours + 60 * minutes + seconds),
-                    altitude_offset=int(fields[5]),
-                    altitude_max=int(fields[6]),
-                    altitude_min=int(fields[7]),
-                    vario_max=float(fields[8]),
-                    vario_min=float(fields[9]),
-                    speed_max=float(fields[10]),
-                    pilot_name=fields[11].strip(),
-                    glider_type=fields[12].strip(),
-                    glider_id=fields[13].strip(),
-                    _igc_lambda=igc_lambda(self, index)))
+                index=index,
+                datetime=datetime.datetime(year + 2000, month, day, hour, minute, second, tzinfo=UTC()),
+                utc_offset=int(fields[3]),
+                duration=datetime.timedelta(seconds=3600 * hours + 60 * minutes + seconds),
+                altitude_offset=int(fields[5]),
+                altitude_max=int(fields[6]),
+                altitude_min=int(fields[7]),
+                vario_max=float(fields[8]),
+                vario_min=float(fields[9]),
+                speed_max=float(fields[10]),
+                pilot_name=fields[11].strip(),
+                glider_type=fields[12].strip(),
+                glider_id=fields[13].strip(),
+                _igc_lambda=igc_lambda(self, index)))
             line = self.readline(0.5)
         return add_igc_filenames(tracks, self.manufacturer[:3].upper(), self.serial_number)
 
@@ -261,7 +306,7 @@ class Sixty15(FlightRecorderBase):
         if line == ' Done\r\n':
             return name
         elif line == 'full list\r\n':
-            raise RuntimeError # FIXME
+            raise RuntimeError  # FIXME
         elif line == 'Syntax Error\r\n':
             raise ProtocolError('syntax error')
         elif line == 'already exist\r\n':
@@ -330,7 +375,7 @@ class Sixty15(FlightRecorderBase):
 
     def flash(self, model, srf):
         if model != '6015':
-            raise RuntimeError # FIXME
+            raise RuntimeError  # FIXME
         while True:
             self.write('S007FlyProg_6015AA')
             response = self.read_flash_response(None)

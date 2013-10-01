@@ -84,7 +84,7 @@ class SRecordFile(object):
             if m:
                 length = int(m.group(1), 16)
                 data = ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(2)))
-                checksum = int(m.group(3), 16) # FIXME check
+                checksum = int(m.group(3), 16)  # FIXME check
                 if length != len(data) + 3:
                     raise SRecordError(record)
                 self.header = data
@@ -184,7 +184,7 @@ class M32C87(object):
             return struct.unpack('>' + output, self.io.readn(struct.calcsize(output)))
 
     def check_id(self):
-        pass # FIXME
+        pass  # FIXME
 
     def lock(self):
         self.command('\x75')

@@ -38,10 +38,10 @@ for model in 'COMPEO COMPEO+ COMPETINO COMPETINO+ GALILEO'.split():
     MANUFACTURER[model] = 'Brauniger'
 
 MEMORY_MAP = {
-        'glider_id': (224, '16s', str),
-        'glider_type': (192, '16s', str),
-        'pilot_name': (0, '16s', str),
-        'recording_interval': (97, 'B', int)}
+    'glider_id': (224, '16s', str),
+    'glider_type': (192, '16s', str),
+    'pilot_name': (0, '16s', str),
+    'recording_interval': (97, 'B', int)}
 
 XON = '\021'
 XOFF = '\023'
@@ -131,11 +131,11 @@ class Fifty20(FlightRecorderBase):
         else:
             line = ''
             while True:
-		index = self.buffer.find('\n')
-		if index == -1:
+                index = self.buffer.find('\n')
+                if index == -1:
                     line += self.buffer
                     self.buffer = self.io.read(timeout)
-		else:
+                else:
                     line += self.buffer[:index + 1]
                     self.buffer = self.buffer[index + 1:]
                     logger.info('readline %r' % line)
@@ -151,12 +151,12 @@ class Fifty20(FlightRecorderBase):
             if self.readline(timeout) != XOFF:
                 raise ProtocolError
             while True:
-		line = self.readline(timeout)
-		if line == XON:
+                line = self.readline(timeout)
+                if line == XON:
                     break
-		elif re is None:
+                elif re is None:
                     yield line
-		else:
+                else:
                     m = re.match(line.decode('nmea_sentence'))
                     if m is None:
                         raise ProtocolError(line)
@@ -246,15 +246,15 @@ class Fifty20(FlightRecorderBase):
         self.none('PBRCTRW,%03d,001,%s' % (n, ctr.remark[:17].ljust(17)))
         for i, ctrpoint in enumerate(ctr.ctrpoints):
             command = 'PBRCTRW,%03d,%03d,%s,%02d%06.3f,%s,%03d%06.3f,%s' % (
-                    n,
-                    i + 2,
-                    ctrpoint.type,
-                    abs(60 * ctrpoint.lat) / 60,
-                    abs(60 * ctrpoint.lat) % 60,
-                    'S' if ctrpoint.lat < 0 else 'N',
-                    abs(60 * ctrpoint.lon) / 60,
-                    abs(60 * ctrpoint.lon) % 60,
-                    'W' if ctrpoint.lon < 0 else 'E')
+                n,
+                i + 2,
+                ctrpoint.type,
+                abs(60 * ctrpoint.lat) / 60,
+                abs(60 * ctrpoint.lat) % 60,
+                'S' if ctrpoint.lat < 0 else 'N',
+                abs(60 * ctrpoint.lon) / 60,
+                abs(60 * ctrpoint.lon) % 60,
+                'W' if ctrpoint.lon < 0 else 'E')
             if ctrpoint.type == 'C':
                 command += ',%04d' % (ctrpoint.radius,)
             elif ctrpoint.type in ('T', 'Z'):
@@ -297,21 +297,21 @@ class Fifty20(FlightRecorderBase):
             l = l.decode('nmea_sentence')
             m = PBRRTS_RE1.match(l)
             if m:
-		index, count, name = int(m.group(1)), int(m.group(2)), m.group(3)
-		if count == 1:
+                index, count, name = int(m.group(1)), int(m.group(2)), m.group(3)
+                if count == 1:
                     yield Route(index, name, [])
-		else:
+                else:
                     routepoints = []
             else:
-		m = PBRRTS_RE2.match(l)
-		if m:
+                m = PBRRTS_RE2.match(l)
+                if m:
                     index, count, routepoint_index = (int(i) for i in m.groups()[0:3])
                     routepoint_short_name = m.group(4)
                     routepoint_long_name = m.group(5)
                     routepoints.append(Routepoint(routepoint_short_name, routepoint_long_name))
                     if routepoint_index == count - 1:
                         yield Route(index, name, routepoints)
-		else:
+                else:
                     raise ProtocolError(m)
 
     def pbrrts(self):
@@ -322,6 +322,7 @@ class Fifty20(FlightRecorderBase):
 
     def pbrtl(self):
         tracks = []
+
         def igc_lambda(self, index):
             return lambda: self.ipbrtr(index)
         for m in self.ieach('PBRTL,', PBRTL_RE, 0.5):
@@ -338,6 +339,7 @@ class Fifty20(FlightRecorderBase):
 
     def pbrtle(self):
         tracks = []
+
         def igc_lambda(self, index):
             return lambda: self.ipbrtr(index)
         for m in self.ieach('PBRTLE,', PBRTLE_RE, 0.5):

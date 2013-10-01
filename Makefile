@@ -1,15 +1,15 @@
+SRC = $(shell find flightrecorder tests -name \*.py) scripts/flightrecorder
+
 .PHONY: all
 all: pep8 pyflakes
 
 .PHONY: pep8
 pep8:
-	find . -name \*.py | xargs pep8 --ignore=E501
-	pep8 --ignore=E501 scripts/flightrecorder
+	pep8 --ignore=E501 $(SRC)
 
 .PHONY: pyflakes
 pyflakes:
-	find . -name \*.py | xargs pyflakes
-	pyflakes scripts/flightrecorder
+	pyflakes $(SRC)
 
 .PHONY: deb
 deb:

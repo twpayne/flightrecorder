@@ -20,6 +20,7 @@ import logging
 import re
 import os
 
+from ascent import Ascent
 from errors import TimeoutError
 from fifty20 import Fifty20
 from flymaster import Flymaster
@@ -33,6 +34,7 @@ logger = logging.getLogger(__name__)
 DEVICE_GLOBS = {
     'Darwin': (
         '/dev/cu.PL2303*',
+        '/dev/cu.usbmodem*',
         '/dev/cu.usbserial*',),
     'FreeBSD': (
         '/dev/cuad*',),
@@ -42,7 +44,7 @@ DEVICE_GLOBS = {
 
 class FlightRecorder(object):
 
-    SUPPORTED_MODELS = Fifty20.SUPPORTED_MODELS + Flymaster.SUPPORTED_MODELS + Sixty15.SUPPORTED_MODELS
+    SUPPORTED_MODELS = Ascent.SUPPORTED_MODELS + Fifty20.SUPPORTED_MODELS + Flymaster.SUPPORTED_MODELS + Sixty15.SUPPORTED_MODELS
 
     def __new__(self, device=None, model=None):
         if device:
@@ -57,7 +59,9 @@ class FlightRecorder(object):
                 io = SerialIO(device)
             except IOError:
                 continue
-            if model in Fifty20.SUPPORTED_MODELS:
+            if model in Ascent.SUPPORTED_MODELS:
+                return Ascent(io)
+            elif model in Fifty20.SUPPORTED_MODELS:
                 return Fifty20(io)
             elif model in Flymaster.SUPPORTED_MODELS:
                 return Flymaster(io)

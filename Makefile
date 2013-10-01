@@ -1,3 +1,6 @@
+.PHONY: all
+all: pep8 pyflakes
+
 .PHONY: pep8
 pep8:
 	find . -name \*.py | xargs pep8 --ignore=E501

@@ -84,7 +84,7 @@ class SRecordFile(object):
             if m:
                 length = int(m.group(1), 16)
                 data = ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(2)))
-                checksum = int(m.group(3), 16)  # FIXME check
+                # checksum = int(m.group(3), 16)  # FIXME check
                 if length != len(data) + 3:
                     raise SRecordError(record)
                 self.header = data
@@ -95,7 +95,7 @@ class SRecordFile(object):
                 length = int(m.group(2), 16)
                 address = int(m.group(3), 16)
                 data = ''.join(chr(int(x, 16)) for x in re.findall(r'..', m.group(4)))
-                checksum = int(m.group(5), 16)
+                # checksum = int(m.group(5), 16)  # FIXME check
                 if length != 2 + i + len(data):
                     raise SRecordError(record)
                 self.data[address] = data
@@ -103,14 +103,14 @@ class SRecordFile(object):
             m = S5_RE.match(record)
             if m:
                 address = int(m.group(1), 16)
-                checksum = int(m.group(2), 16)
+                # checksum = int(m.group(2), 16)  # FIXME check
                 if address != len(self.srecords):
                     raise SRecordError(record)
                 continue
             m = S7_RE.match(record) or S8_RE.match(record) or S9_RE.match(record)
             if m:
                 address = int(m.group(1), 16)
-                checksum = int(m.group(2), 16)
+                # checksum = int(m.group(2), 16)  # FIXME check
                 self.starting_executing_address = address
                 continue
             raise SRecordError(record)
@@ -130,7 +130,7 @@ class SRecordFile(object):
             data_length += len(self.data[address])
         incomplete = data_length & 0xff
         if incomplete:
-            data.append('\xff' * (size - incomplete))
+            data.append('\xff' * (data_length - incomplete))
             data_length += incomplete
         data = ''.join(data)
         for i in xrange(0, data_length >> 8):
@@ -194,7 +194,7 @@ class M32C87(object):
 
     def erase(self):
         self.command('\xa7', 'B', ('\xd0',))
-        if status_register_check(M32C87.ERASE_ERROR):
+        if self.status_register_check(M32C87.ERASE_ERROR):
             raise M32C87Error('erase')
 
     def status_register_read(self):

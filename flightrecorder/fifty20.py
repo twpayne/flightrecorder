@@ -24,6 +24,7 @@ from base import FlightRecorderBase
 from common import CTR, CTRPoint, Track, add_igc_filenames, simplerepr
 from errors import NotAvailableError, ProtocolError
 import nmea
+nmea  # suppress pyflakes warning
 from utc import UTC
 from waypoint import Waypoint
 

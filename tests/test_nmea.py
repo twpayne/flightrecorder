@@ -8,6 +8,7 @@ import unittest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import flightrecorder.nmea as nmea
+nmea  # suppress pyflakes warning
 
 
 class NMEATestCase(unittest.TestCase):

@@ -7,6 +7,8 @@ twpayne@gmail.com
 Supported flight recorders
 --------------------------
 
+Ascent
+
 Flytec: 5020, 5030, 6015, 6020, 6030
 
 Brauniger: Competino, Competino+, Compeo, Compeo+, Galileo, IQ-Basic
@@ -35,6 +37,17 @@ To download all tracklogs, just run
     flightrecorder
 
 The program will attempt to detect your flight recorder.
+
+
+Listing tracklogs
+-----------------
+
+To list all the tracklogs, run
+
+::
+
+    flightrecorder tracks list
+
 
 Uploading waypoints
 -------------------

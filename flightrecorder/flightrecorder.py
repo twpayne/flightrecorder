@@ -74,6 +74,8 @@ class FlightRecorder(object):
                         logger.info('write %r' % line)
                         io.write(line)
                         line = io.read(0.2)
+                        if line == '\x00':
+                            return Ascent(io)
                         while line.find('\x11' if line[0] == '\x13' else '\n') == -1:
                             line += io.read()
                         logger.info('readline %r' % line)

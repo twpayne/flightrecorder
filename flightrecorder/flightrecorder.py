@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 DEVICE_GLOBS = {
     'Darwin': (
-        '/dev/cu.PL2303*',
+        '/dev/cu.*2303*',
         '/dev/cu.usbserial*',),
     'FreeBSD': (
         '/dev/cuad*',),

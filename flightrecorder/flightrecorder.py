@@ -85,7 +85,7 @@ class FlightRecorder(object):
                         while line.find('\n') == -1:
                             line += io.read()
                         logger.info('readline %r' % line)
-                        if re.match('(Brauniger IQ-Basic|Flytec 6015)\r\n\Z', line):
+                        if re.match('(Flytec 6015|IQ-Basic GPS)\r\n\Z', line):
                             logger.info('read %r' % line)
                             return Sixty15(io, line)
                 except TimeoutError:

@@ -3,7 +3,7 @@
 from setuptools import setup
 
 
-version = '0.9.3'
+version = '0.9.4'
 
 setup(
     author='Tom Payne',

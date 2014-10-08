@@ -173,7 +173,7 @@ class Fifty20(FlightRecorderBase):
     def one(self, command, re=None, timeout=1):
         result = None
         for m in self.ieach(command, re, timeout):
-            if not result is None:
+            if result is not None:
                 raise ProtocolError(m)
             result = m
         return result
@@ -400,7 +400,7 @@ class Fifty20(FlightRecorderBase):
         else:
             # PBRWPX,, is officially documented but very slow and very buggy
             # so, instead, pretend that the command is not available
-            #self.none('PBRWPX,,', None)
+            # self.none('PBRWPX,,', None)
             raise NotAvailableError
 
     @property

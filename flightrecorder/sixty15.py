@@ -425,12 +425,12 @@ class Sixty15(FlightRecorderBase):
         return self._pilot_name
 
     def get(self, key):
-        if not key in FA_MAP:
+        if key not in FA_MAP:
             raise NotAvailableError
         return self.rfa(FA_MAP[key])[0]
 
     def set(self, key, value, first=True, last=True):
-        if not key in FA_MAP:
+        if key not in FA_MAP:
             raise NotAvailableError
         if first:
             self.act82()

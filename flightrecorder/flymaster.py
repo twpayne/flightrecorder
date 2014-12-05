@@ -111,14 +111,17 @@ class TrackPositionRecordDeltas(list):
 
 class Flymaster(FlightRecorderBase):
 
-    SUPPORTED_MODELS = 'B1NAV'.split()
+    SUPPORTED_MODELS = 'B1NAV NAV'.split()
 
     def __init__(self, io, line=None):
         self.io = io
-        self._snp = SNP(*PBRSNP_RE.match(line.decode('nmea_sentence')).groups()) if line else None
         self._pfmdnl_lst = None
         self.buffer = ''
         self.waypoint_precision = 15
+        if line is None:
+            self._snp = self.pfmsnp()
+        else:
+            self._snp = SNP(*PBRSNP_RE.match(line.decode('nmea_sentence')).groups())
 
     def readline(self, timeout):
         result = ''
@@ -139,7 +142,7 @@ class Flymaster(FlightRecorderBase):
             while True:
                 if len(self.buffer) >= 2:
                     id = struct.unpack('<H', self.buffer[:2])[0]
-                    if id == 0xa3a3:
+                    if id == 0xa3a3 and self.model != 'Nav':
                         logger.info('readpacket %r' % self.buffer[:2])
                         self.buffer = self.buffer[2:]
                         return Packet(id, None)
@@ -258,6 +261,8 @@ class Flymaster(FlightRecorderBase):
                 datetime=dt,
                 duration=datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds),
                 _igc_lambda=igc_lambda(self, dt)))
+            if self.model == 'Nav':
+                index -= 1
             if index + 1 == count:
                 break
         return add_igc_filenames(tracks, 'XFR', self.serial_number)
@@ -318,20 +323,14 @@ class Flymaster(FlightRecorderBase):
 
     @property
     def model(self):
-        if self._snp is None:
-            self._snp = self.pfmsnp()
         return self._snp.model
 
     @property
     def software_version(self):
-        if self._snp is None:
-            self._snp = self.pfmsnp()
         return self._snp.software_version
 
     @property
     def serial_number(self):
-        if self._snp is None:
-            self._snp = self.pfmsnp()
         return self._snp.serial_number
 
     @property
